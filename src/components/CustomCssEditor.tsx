@@ -8,6 +8,8 @@
  *
  * The editor is surfaced inside an expandable panel similar to TokenPanel — it
  * floats over the layout and is collapsed by default.
+ *
+ * Depends on @codemirror/lang-css for CSS syntax highlighting and completion.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -157,7 +159,7 @@ export default function CustomCssEditor() {
       style={{
         position: 'fixed',
         bottom: 0,
-        right: '340px', // sit to the left of TokenPanel
+        right: '232px', // sit to the left of TokenPanel (220px panel + 12px gap)
         zIndex: 100,
         width: '320px',
         background: '#1e1e1e',
@@ -173,6 +175,7 @@ export default function CustomCssEditor() {
       {/* Header / toggle */}
       <button
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         style={{
           display: 'flex',
           alignItems: 'center',

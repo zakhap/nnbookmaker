@@ -172,8 +172,15 @@ function buildSrcdoc(html: string, pageGeomCSS: string, customCss = ''): string 
   // lower layer (primitives, global, semantic, components) without needing
   // elevated specificity or !important. The empty overridesCss file is still
   // included first to ensure the layer is declared before the user rules.
-  const userOverrides = customCss.trim()
-    ? `\n@layer overrides {\n${customCss}\n}`
+  //
+  // Sanitize </style> sequences so the HTML parser cannot break out of the
+  // <style> block even on a local-only tool (defense in depth).
+  const safeCustomCss = customCss.replace(/<\/style/gi, '<\\/style');
+  // Note: if the user types `@layer overrides { }` directly in the editor, it
+  // creates a sublayer `overrides.overrides`, which has lower priority than
+  // plain rules placed directly inside this outer @layer overrides block.
+  const userOverrides = safeCustomCss.trim()
+    ? `\n@layer overrides {\n${safeCustomCss}\n}`
     : '';
 
   const inlineStyles = [
