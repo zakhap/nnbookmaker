@@ -202,6 +202,29 @@ assert('size: 6in 9in', fullCSS.includes('size: 6in 9in'));
 assert('margin-top: 0.75in', fullCSS.includes('margin-top: 0.75in'));
 assert('no var() references in output', !fullCSS.includes('var('));
 
+// ── Test 6: distinct margin values prevent false positives ────────────────────
+
+console.log('\n=== generatePageCSS (all-distinct margins) ===');
+
+// Test with all-distinct margin values to prevent false positives
+const distinctGeom = generatePageCSS({
+  width: '152.4mm',
+  height: '228.6mm',
+  marginTop: '18mm',
+  marginBottom: '20mm',
+  marginInside: '25mm',
+  marginOutside: '13mm',
+});
+const distinctRecto = distinctGeom.slice(distinctGeom.indexOf('@page :right'), distinctGeom.indexOf('@page :left'));
+const distinctVerso = distinctGeom.slice(distinctGeom.indexOf('@page :left'));
+
+assert('distinct: recto margin-left is inside (25mm)', distinctRecto.includes('margin-left: 25mm'));
+assert('distinct: recto margin-right is outside (13mm)', distinctRecto.includes('margin-right: 13mm'));
+assert('distinct: recto margin-top (18mm)', distinctRecto.includes('margin-top: 18mm'));
+assert('distinct: recto margin-bottom (20mm)', distinctRecto.includes('margin-bottom: 20mm'));
+assert('distinct: verso margin-left is outside (13mm)', distinctVerso.includes('margin-left: 13mm'));
+assert('distinct: verso margin-right is inside (25mm)', distinctVerso.includes('margin-right: 25mm'));
+
 // ── Results ───────────────────────────────────────────────────────────────────
 
 console.log('');
