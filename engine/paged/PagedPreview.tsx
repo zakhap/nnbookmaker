@@ -24,7 +24,7 @@ import overridesCss from '../../tokens/overrides.css?raw';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
-interface PagedPreviewProps {
+export interface PagedPreviewProps {
   /** The HTML string produced by parseMd() — book body content only. */
   html: string;
 }
@@ -58,7 +58,6 @@ function buildSrcdoc(html: string): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Book Preview</title>
   <style>
 ${inlineStyles}
@@ -113,7 +112,7 @@ ${html}
  *     cannot bleed into the app shell.
  *   - React reconciliation never sees the Paged.js-generated page nodes.
  */
-export default function PagedPreview({ html }: PagedPreviewProps) {
+export function PagedPreview({ html }: PagedPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -136,10 +135,12 @@ export default function PagedPreview({ html }: PagedPreviewProps) {
       title="Book Preview"
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100%',
         border: 'none',
         display: 'block',
       }}
     />
   );
 }
+
+export default PagedPreview;

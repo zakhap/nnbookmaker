@@ -7,7 +7,9 @@ export default function App() {
   const [html, setHtml] = useState('');
 
   useEffect(() => {
-    parseMd(sampleMd).then(({ html }) => setHtml(html));
+    parseMd(sampleMd)
+      .then(({ html }) => setHtml(html))
+      .catch((err) => console.error('parseMd failed:', err));
   }, []);
 
   return (
