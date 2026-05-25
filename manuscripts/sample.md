@@ -1,31 +1,76 @@
 ---
-title: Sample Book
-author: Test Author
+title: The Typographer's Companion
+author: Ada Lovelace
+isbn: 978-0-000-00000-0
 trim: 6x9
 theme: default
 ---
 
-# Chapter One
+# Chapter One: Setting Type
 
-This is a sample manuscript for testing the nnbookmaker pipeline. It exercises basic Markdown rendering — paragraphs, headings, lists, and footnotes.
+Typography is the craft of endowing human language with a durable visual form.
+Good typography is invisible to the reader — it serves the text, not itself.[^1]
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+## Basic Prose
 
-## A Section Heading
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
-Here is a paragraph with a footnote reference.[^1] And another sentence to give the paragraph some body.
+## Small Caps and Emphasis
 
-- Item one in a list
-- Item two in a list
-- Item three in a list
+An acronym like :span[NASA]{.smallcaps} or :span[ISBN]{.smallcaps} should be set
+in small capitals. You can also combine *italic* and **bold** inline with
+:span[special-treatment]{.highlight} spans.
 
-### A Sub-section
+Note: remark-directive text-directive syntax is `:name[content]{attrs}`.
+The `:span` name is used as a generic inline wrapper; the class is applied via
+the `.className` shorthand in the attributes block.
 
-> A block quotation. Typography is the craft of endowing human language with a durable visual form.
-> — Robert Bringhurst
+## A Verse Block
 
-## Another Chapter Section
+The following poem uses a fenced directive for verse formatting:
 
-More body text to test pagination at various trim sizes. The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+:::verse
 
-[^1]: This is a footnote. In the MVP it may appear as an endnote; bottom-of-page placement is a fast-follow.
+Whose woods these are I think I know.
+His house is in the village though;
+He will not see me stopping here
+To watch his woods fill up with snow.
+
+:::
+
+## A Warning Callout
+
+:::callout
+
+**Note:** Directives let you attach arbitrary CSS classes to block-level
+content. This callout should render as `<div class="callout">`.
+
+:::
+
+# Chapter Two: Tables and Data
+
+## A Reference Table
+
+| Trim size | Width  | Height | Pages (est.) |
+| --------- | ------ | ------ | ------------ |
+| 5×8       | 5 in   | 8 in   | 240          |
+| 6×9       | 6 in   | 9 in   | 200          |
+| 8.5×11    | 8.5 in | 11 in  | 140          |
+
+Strikethrough text shows ~~deleted copy~~ mid-revision.
+
+## Task List (GFM)
+
+- [x] Parse frontmatter
+- [x] Render headings
+- [ ] Paginate with Paged.js
+- [ ] Export PDF
+
+# Chapter Three: Notes
+
+Further reading is listed at the end of this manuscript.[^2]
+
+[^1]: Robert Bringhurst, *The Elements of Typographic Style*, 4th ed.
+[^2]: See the bibliography for a full list of sources.
