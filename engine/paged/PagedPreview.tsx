@@ -83,6 +83,13 @@ export interface PagedPreviewProps {
    * whenever any design token is updated.
    */
   tokenVersion?: number;
+  /**
+   * User-authored CSS to inject into the @layer overrides layer inside the
+   * iframe. Wrapped in `@layer overrides { … }` and appended after the
+   * inlined overrides.css content so it wins by layer priority without
+   * needing !important or elevated specificity.
+   */
+  customCss?: string;
 }
 
 // ─── Page position helpers ────────────────────────────────────────────────────
@@ -156,8 +163,19 @@ function scrollToPageIndex(iframe: HTMLIFrameElement, idx: number): void {
  * @param html        Book body HTML string from parseMd()
  * @param pageGeomCSS Resolved @page CSS from generatePageGeometry() — must
  *                    contain literal length values, not var() references
+ * @param customCss   User-authored CSS wrapped in `@layer overrides { … }` and
+ *                    appended after the inlined overrides.css — wins by layer
+ *                    priority without !important or elevated specificity
  */
-function buildSrcdoc(html: string, pageGeomCSS: string): string {
+function buildSrcdoc(html: string, pageGeomCSS: string, customCss = ''): string {
+  // User CSS is wrapped in @layer overrides so it takes priority over every
+  // lower layer (primitives, global, semantic, components) without needing
+  // elevated specificity or !important. The empty overridesCss file is still
+  // included first to ensure the layer is declared before the user rules.
+  const userOverrides = customCss.trim()
+    ? `\n@layer overrides {\n${customCss}\n}`
+    : '';
+
   const inlineStyles = [
     layersCss,
     primitivesCss,
@@ -165,6 +183,7 @@ function buildSrcdoc(html: string, pageGeomCSS: string): string {
     semanticCss,
     componentsCss,
     overridesCss,
+    userOverrides,
   ].join('\n\n');
 
   // @footnote is a CSS Paged Media rule not understood by LightningCSS (the
@@ -262,7 +281,7 @@ ${html}
  *   After Paged.js fires its `rendered` event (communicated via postMessage
  *   from inside the iframe), the preview scrolls back to the same page index.
  */
-export function PagedPreview({ html, trimSize, tokenVersion }: PagedPreviewProps) {
+export function PagedPreview({ html, trimSize, tokenVersion, customCss }: PagedPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   // Stores the page index to restore after the next repagination.
   const savedPageIndexRef = useRef<number>(0);
@@ -312,8 +331,8 @@ export function PagedPreview({ html, trimSize, tokenVersion }: PagedPreviewProps
     // See Quirk Q1 / Q2 / Q5 in the file-level JSDoc for why this full-replace
     // strategy is required instead of patching the existing @page rule.
     const pageGeomCSS = generatePageGeometry(document.documentElement);
-    iframe.srcdoc = buildSrcdoc(html, pageGeomCSS);
-  }, [html, trimSize, tokenVersion]);
+    iframe.srcdoc = buildSrcdoc(html, pageGeomCSS, customCss);
+  }, [html, trimSize, tokenVersion, customCss]);
 
   return (
     <iframe

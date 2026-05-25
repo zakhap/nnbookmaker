@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect } from 'react';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
+import CustomCssEditor from './components/CustomCssEditor.tsx';
 import ManuscriptEditor from './components/ManuscriptEditor.tsx';
 import TokenPanel from './components/TokenPanel.tsx';
 import TrimSizeSelector from './components/TrimSizeSelector.tsx';
@@ -15,6 +16,7 @@ export default function App() {
   const customTrimWidth = useBookStore((s) => s.customTrimWidth);
   const customTrimHeight = useBookStore((s) => s.customTrimHeight);
   const tokenVersion = useBookStore((s) => s.tokenVersion);
+  const customCss = useBookStore((s) => s.customCss);
   const setSource = useBookStore((s) => s.setSource);
 
   // ── Initialise with sample manuscript ────────────────────────────────────
@@ -113,7 +115,7 @@ export default function App() {
         {/* Right panel: paged preview */}
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {html ? (
-            <PagedPreview html={html} trimSize={trimSize} tokenVersion={tokenVersion} />
+            <PagedPreview html={html} trimSize={trimSize} tokenVersion={tokenVersion} customCss={customCss} />
           ) : (
             <div style={{ padding: '2rem', color: '#888' }}>Rendering…</div>
           )}
@@ -122,6 +124,9 @@ export default function App() {
 
       {/* Token panel — fixed overlay, collapsed by default */}
       <TokenPanel />
+
+      {/* Custom CSS editor — fixed overlay, collapsed by default */}
+      <CustomCssEditor />
     </div>
   );
 }
