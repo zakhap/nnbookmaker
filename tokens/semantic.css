@@ -1,0 +1,22 @@
+/**
+ * Layer: semantic
+ *
+ * Maps global tokens to typographic roles:
+ * body copy, headings, captions, footnotes, etc.
+ *
+ * Stub — full token set coming in Task 6.
+ */
+
+@layer semantic {
+  :root {
+    --font-body: Georgia, 'Times New Roman', serif;
+    --font-heading: Georgia, 'Times New Roman', serif;
+    --font-mono: 'Courier New', monospace;
+
+    --text-body: calc(var(--pt-base) * 1pt);
+    --text-caption: calc(var(--pt-base) * 0.85pt);
+    --text-footnote: calc(var(--pt-base) * 0.8pt);
+
+    --leading-body: var(--book-baseline);
+  }
+}

@@ -1,0 +1,13 @@
+/**
+ * Layer: overrides
+ *
+ * User/custom CSS injection target.
+ * This layer wins over all layers below it regardless of selector
+ * specificity — no !important needed (spec §3.3 / D-08a).
+ *
+ * This file is intentionally empty; user CSS is injected here at runtime.
+ */
+
+@layer overrides {
+  /* user overrides injected here at runtime */
+}

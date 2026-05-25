@@ -1,0 +1,25 @@
+/**
+ * Layer: global
+ *
+ * Maps primitives to named book measurements.
+ * Trim size, page margins, measure (line length).
+ *
+ * Stub — full token set coming in Task 6.
+ */
+
+@layer global {
+  :root {
+    /* Default trim: 6×9 in */
+    --book-trim-width: 6in;
+    --book-trim-height: 9in;
+
+    /* Page margins */
+    --book-margin-top: 0.75in;
+    --book-margin-bottom: 0.875in;
+    --book-margin-inside: 0.875in;
+    --book-margin-outside: 0.625in;
+
+    /* Baseline grid */
+    --book-baseline: calc(var(--baseline-pt) * 1pt);
+  }
+}

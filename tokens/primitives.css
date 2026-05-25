@@ -1,0 +1,22 @@
+/**
+ * Layer: primitives
+ *
+ * Raw scale values — unitless or absolute. These are the atoms.
+ * Nothing in this layer references another custom property.
+ * Referenced by global, semantic, and component layers.
+ *
+ * Stub — full token set coming in Task 6.
+ */
+
+@layer primitives {
+  :root {
+    /* Type scale ratio (Major Third = 1.25) */
+    --scale-ratio: 1.25;
+
+    /* Base font size in pt (print unit) */
+    --pt-base: 11;
+
+    /* Baseline grid unit — every vertical measure is a multiple of this */
+    --baseline-pt: 14;
+  }
+}

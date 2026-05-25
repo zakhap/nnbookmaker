@@ -1,0 +1,17 @@
+/**
+ * Layer: components
+ *
+ * Applies semantic tokens to specific HTML elements
+ * and structural book components.
+ * All vertical measurements must be calc() multiples of --book-baseline.
+ *
+ * Stub — full token set coming in Task 6.
+ */
+
+@layer components {
+  body {
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+  }
+}
