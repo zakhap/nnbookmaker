@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
+import ManuscriptEditor from './components/ManuscriptEditor.tsx';
 import TokenPanel from './components/TokenPanel.tsx';
 import TrimSizeSelector from './components/TrimSizeSelector.tsx';
 import { useBookStore } from './store.ts';
 import { CONCRETE_TRIM_SIZES, DEFAULT_TRIM } from './trimSizes.ts';
 
-const DEBOUNCE_MS = 300;
-
 export default function App() {
   // ── Store selectors ──────────────────────────────────────────────────────
-  const source = useBookStore((s) => s.source);
   const html = useBookStore((s) => s.html);
   const trimSize = useBookStore((s) => s.trimSize);
   const customTrimWidth = useBookStore((s) => s.customTrimWidth);
@@ -18,25 +16,12 @@ export default function App() {
   const tokenVersion = useBookStore((s) => s.tokenVersion);
   const setSource = useBookStore((s) => s.setSource);
 
-  // ── Debounce timer ───────────────────────────────────────────────────────
-  // Debounce is a UI concern: we do not want parseMd firing on every keystroke.
-  // The store's setSource handles async parseMd + stale-response guarding;
-  // App.tsx is responsible for deciding *when* to call it.
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // ── Initialise with sample manuscript ────────────────────────────────────
   // Call setSource once on mount so the store runs parseMd on the initial text.
   useEffect(() => {
     setSource(sampleMd);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally run once; setSource is stable (Zustand action)
-
-  // ── Cleanup pending debounce on unmount ───────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current !== null) clearTimeout(debounceTimer.current);
-    };
-  }, []);
 
   // ── Trim-size CSS custom properties ──────────────────────────────────────
   // Apply --book-trim-width / --book-trim-height to the document root
@@ -61,30 +46,6 @@ export default function App() {
     document.documentElement.style.setProperty('--book-trim-width', width);
     document.documentElement.style.setProperty('--book-trim-height', height);
   }, [trimSize, customTrimWidth, customTrimHeight]);
-
-  // ── Textarea change handler ───────────────────────────────────────────────
-  const handleSourceChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const text = e.target.value;
-
-      // Debounce: reset the timer on every keystroke, calling store setSource
-      // (which triggers parseMd) only after the user pauses.
-      if (debounceTimer.current !== null) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        debounceTimer.current = null;
-        setSource(text);
-      }, DEBOUNCE_MS);
-
-      // Write source immediately so the textarea stays responsive.
-      // setSource (called after the debounce) will also write source before
-      // running parseMd — this double-write is harmless; the second write is
-      // identical and the generation counter guards the parseMd result.
-      useBookStore.setState({ source: text });
-    },
-    [setSource]
-  );
 
   return (
     <div
@@ -145,26 +106,7 @@ export default function App() {
           >
             manuscript.md
           </div>
-          <textarea
-            value={source}
-            onChange={handleSourceChange}
-            spellCheck={false}
-            style={{
-              flex: 1,
-              resize: 'none',
-              border: 'none',
-              outline: 'none',
-              padding: '12px',
-              fontFamily: '"JetBrains Mono", "Fira Code", "Menlo", monospace',
-              fontSize: '12px',
-              lineHeight: '1.6',
-              color: '#d4d4d4',
-              background: 'transparent',
-              overflowY: 'auto',
-              whiteSpace: 'pre',
-              tabSize: 2,
-            }}
-          />
+          <ManuscriptEditor />
         </div>
 
         {/* Right panel: paged preview */}
