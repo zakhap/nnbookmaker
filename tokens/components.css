@@ -19,7 +19,7 @@
     font-size: var(--text-body-size);
     line-height: var(--text-body-leading);
     color: var(--color-body);
-    background: var(--book-color-paper);
+    background: var(--color-background);
 
     /* Measure: constrain the text column to avoid over-long lines */
     max-width: var(--measure);
@@ -70,7 +70,7 @@
     font-family: var(--font-heading);
     color: var(--color-heading);
     font-weight: normal; /* Book headings are set in regular weight, not bold */
-    letter-spacing: var(--heading-tracking);
+    letter-spacing: var(--heading-letter-spacing);
     page-break-after: avoid;
     break-after: avoid;
     orphans: 3;
@@ -114,26 +114,33 @@
   h4 {
     font-size: var(--heading-4-size);
     line-height: var(--heading-4-leading);
-    margin-top: calc(2 * var(--book-baseline));
-    margin-bottom: calc(0 * var(--book-baseline));
+    margin-top: var(--heading-4-margin-before);
+    margin-bottom: 0;
     font-style: italic;
     font-weight: normal;
   }
 
   /* ── h5, h6 — Minor sub-heads (same size as body, distinguished by style) */
 
-  h5,
+  h5 {
+    font-size: var(--text-body-size);
+    line-height: var(--text-body-leading);
+    margin-top: var(--heading-5-margin-before);
+    margin-bottom: 0;
+    font-weight: normal;
+  }
+
   h6 {
     font-size: var(--text-body-size);
     line-height: var(--text-body-leading);
-    margin-top: calc(1 * var(--book-baseline));
-    margin-bottom: calc(0 * var(--book-baseline));
+    margin-top: var(--heading-6-margin-before);
+    margin-bottom: 0;
     font-weight: normal;
   }
 
   h5 {
     font-variant-caps: small-caps;
-    letter-spacing: var(--smallcaps-tracking);
+    letter-spacing: var(--smallcaps-letter-spacing);
   }
 
   h6 {
@@ -147,7 +154,7 @@
     margin-bottom: var(--block-margin-after);
     margin-left: var(--block-indent-left);
     margin-right: var(--block-indent-right);
-    font-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt — slightly smaller */
+    font-size: var(--text-extract-size); /* ≈ 10.2pt — slightly smaller */
     line-height: var(--text-body-leading); /* keep on grid */
   }
 
@@ -177,6 +184,8 @@
   .verse {
     margin-top: var(--block-margin-before);
     margin-bottom: var(--block-margin-after);
+    /* Left-only indent: intentional — verse lines are ragged-right by nature,
+       so a right margin would waste space without adding visual balance. */
     margin-left: var(--block-indent-left);
     font-family: var(--font-body);
     font-size: var(--text-body-size);
@@ -208,7 +217,7 @@
     padding-right: var(--callout-padding-h);
     border-top: 1px solid var(--color-rule);
     border-bottom: 1px solid var(--color-rule);
-    font-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt */
+    font-size: var(--text-extract-size); /* ≈ 10.2pt */
     line-height: var(--text-body-leading);
     page-break-inside: avoid;
     break-inside: avoid;
@@ -256,7 +265,7 @@
     margin-top: var(--block-margin-before);
     margin-bottom: var(--block-margin-after);
     border-collapse: collapse;
-    font-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt — one step down */
+    font-size: var(--text-extract-size); /* ≈ 10.2pt — one step down */
     line-height: var(--text-body-leading);
     width: 100%;
   }
@@ -283,7 +292,7 @@
   th {
     font-weight: normal;
     font-variant-caps: small-caps;
-    letter-spacing: var(--smallcaps-tracking);
+    letter-spacing: var(--smallcaps-letter-spacing);
   }
 
   /* ── Code / Pre ─────────────────────────────────────────────────────────── */
@@ -301,7 +310,6 @@
     margin-bottom: var(--block-margin-after);
     margin-left: var(--block-indent-left);
     white-space: pre-wrap;
-    word-break: break-all;
     overflow-wrap: anywhere;
     page-break-inside: avoid;
     break-inside: avoid;
@@ -404,13 +412,16 @@
 
   .smallcaps {
     font-variant-caps: all-small-caps;
-    letter-spacing: var(--smallcaps-tracking);
+    letter-spacing: var(--smallcaps-letter-spacing);
   }
 
   .dropcap::first-letter {
     float: left;
     font-size: calc(3 * var(--book-baseline)); /* 3-line drop cap */
     line-height: 1;
+    /* Optical tweaks: margin-top and margin-right are intentional eye-balled
+       adjustments to align the cap visually with the text cap-height and the
+       following letter — not grid-derived layout spacing. */
     margin-top: 0.1em;
     margin-right: 0.05em;
     color: var(--color-accent);
@@ -421,6 +432,6 @@
     text-decoration: none;
     border-bottom: 1px dotted var(--color-rule);
     font-variant-caps: all-small-caps;
-    letter-spacing: var(--smallcaps-tracking);
+    letter-spacing: var(--smallcaps-letter-spacing);
   }
 }

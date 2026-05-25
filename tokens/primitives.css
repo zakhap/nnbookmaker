@@ -9,7 +9,7 @@
  *   pt-base       11    Classic trade book body size (10–12pt range)
  *   leading-ratio 1.272727 → 14/11: gives a 14pt baseline grid
  *   scale-ratio   1.333 (Perfect Fourth) — tighter than Major Third for book
- *                 headings; H1 at 4 steps = 11 × 1.333^4 ≈ 26pt, H2 ≈ 19.5pt
+ *                 headings; H1 at 4 steps = 11 × 1.333^4 ≈ 34.7pt, H2 ≈ 26pt, H3 ≈ 19.5pt
  *   indent-ratio  2.0   First-line indent = 2 × body size = 22pt ≈ 2em
  */
 
@@ -56,6 +56,11 @@
     /* Space before h3: 2 baselines; after h3: 0 (margin collapses into body) */
     --rhythm-h3-before: 2;
     --rhythm-h3-after: 0;
+
+    /* Space before h4/h5/h6; after is always 0 (collapses into body) */
+    --rhythm-h4-before: 2;
+    --rhythm-h5-before: 1;
+    --rhythm-h6-before: 1;
 
     /* Space above/below block elements (blockquote, verse, callout, table) */
     --rhythm-block-before: 1;

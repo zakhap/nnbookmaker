@@ -25,6 +25,7 @@
     --font-mono: var(--font-mono-family);
 
     /* ── Colour role assignments ─────────────────────────────────────────  */
+    --color-background: var(--book-color-paper);
     --color-body: var(--book-color-ink);
     --color-heading: var(--book-color-ink);
     --color-caption: color-mix(in srgb, var(--book-color-ink) 70%, transparent);
@@ -80,9 +81,22 @@
     --heading-2-margin-after: calc(var(--rhythm-h2-after) * var(--book-baseline));
 
     --heading-3-margin-before: calc(var(--rhythm-h3-before) * var(--book-baseline));
-    --heading-3-margin-after: calc(0 * var(--book-baseline)); /* collapses into text */
+    --heading-3-margin-after: 0; /* collapses into text */
+
+    --heading-4-margin-before: calc(var(--rhythm-h4-before) * var(--book-baseline));
+    --heading-5-margin-before: calc(var(--rhythm-h5-before) * var(--book-baseline));
+    --heading-6-margin-before: calc(var(--rhythm-h6-before) * var(--book-baseline));
+
+    /* ── Letter-spacing role assignments ─────────────────────────────────
+       Routes tracking tokens through the semantic layer so components never
+       reference primitives directly.                                       */
+    --heading-letter-spacing: var(--heading-tracking);
+    --smallcaps-letter-spacing: var(--smallcaps-tracking);
 
     /* ── Sub-body sizes ──────────────────────────────────────────────────  */
+
+    /* Extract text: slightly smaller than body, used for blockquotes, callouts, tables */
+    --text-extract-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt */
 
     /* Caption: slightly smaller, one step below body, single baseline each */
     --caption-size: calc(var(--font-base-size) * 0.864); /* ≈ 9.5pt */
