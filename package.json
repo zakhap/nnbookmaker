@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "tsc -p tsconfig.engine.json && node engine/pipeline/test.mjs"
+    "test": "tsc -p tsconfig.engine.json && node engine/pipeline/test.mjs && node engine/page-geometry/test.mjs"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.5.0",

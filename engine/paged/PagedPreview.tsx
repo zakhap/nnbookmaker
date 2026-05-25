@@ -125,17 +125,18 @@ ${inlineStyles}
   </style>
   <style id="page-geometry">
 ${pageGeomCSS}
-
+  </style>
+  <style id="preview-chrome">
     /* Preview chrome — visible pages on a neutral background */
     body {
-      background: #e8e8e8;
+      background: #e0e0e0;
       margin: 0;
       padding: 2rem;
     }
 
     .pagedjs_page {
       background: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       margin: 0 auto 2rem;
     }
   </style>

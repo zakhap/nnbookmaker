@@ -59,13 +59,19 @@ export function readPageGeometry(root: Element): PageGeometry {
  * given geometry.
  *
  * Two rules are emitted:
- *   @page        — default page (and recto): outside on left is the spine side
- *   @page :left  — verso pages (even-numbered): inside/outside swap
+ *   @page        — default / recto (right, odd-numbered) pages
+ *   @page :left  — verso (left, even-numbered) pages
  *
- * The recto/verso margin model follows the convention that:
- *   - margin-left on a recto  page = outside margin
- *   - margin-right on a recto page = inside  margin (toward spine)
- *   - @page :left inverts these
+ * For a standard LTR book:
+ *   - Recto (right, odd) page:  left side = inside (spine), right side = outside
+ *   - Verso (left, even) page:  left side = outside,        right side = inside (spine)
+ *
+ * IMPORTANT — known inversion issue (see Task 13: recto/verso margin model):
+ * The margin assignments below may be inverted. The current implementation
+ * places `marginOutside` on `margin-left` and `marginInside` on `margin-right`
+ * for the default @page rule, but for a recto page the left side IS the spine
+ * (inside), so the assignments should be the other way around. Task 13's
+ * implementer should verify and correct the mapping here and in @page :left.
  */
 export function generatePageCSS(geometry: PageGeometry): string {
   const { width, height, marginTop, marginBottom, marginInside, marginOutside } = geometry;
