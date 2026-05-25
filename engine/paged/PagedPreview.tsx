@@ -7,6 +7,41 @@
  * The iframe receives a full standalone HTML document via srcdoc.
  * Paged.js (polyfill build) auto-runs when the document loads.
  * Token CSS layers are inlined as <style> tags.
+ *
+ * ─── Paged.js quirks discovered during Phase 0 validation ───────────────────
+ *
+ * Q1 — var() does not resolve inside @page descriptors (D-08b).
+ *   Paged.js parses @page rules at polyfill load time, before CSS custom
+ *   properties are fully resolved. Any `size: var(--w) var(--h)` in @page is
+ *   silently ignored (page stays at A4 default). Fix: generatePageGeometry()
+ *   reads resolved values from getComputedStyle in the parent frame and writes
+ *   a literal `@page { size: 127mm 203.2mm; }` into the iframe's <style>.
+ *
+ * Q2 — @page rules must be present in the document *before* the polyfill runs.
+ *   Paged.js reads the stylesheet cascade on init and does not re-process @page
+ *   if rules are added or mutated afterwards. This is why the geometry <style>
+ *   block is placed in <head> ahead of the polyfill <script> tag in buildSrcdoc,
+ *   and why the entire srcdoc is replaced (not patched) when trim size changes.
+ *
+ * Q3 — @footnote is not understood by LightningCSS (Vite's CSS transformer).
+ *   `@page { @footnote { … } }` causes a build-time parse error if placed in
+ *   any .css file that passes through the Vite pipeline. It is injected as a
+ *   raw string directly into the iframe srcdoc (see `pagedMediaExtras` in
+ *   buildSrcdoc) to bypass the transformer entirely.
+ *
+ * Q4 — PagedPolyfill.on('rendered', cb) hook is only available from v0.4+.
+ *   On some environments / CDN builds the hook API may be absent. The fallback
+ *   is an 800 ms setTimeout that fires notifyRendered unconditionally. This is
+ *   a heuristic; very long manuscripts may still be paginating when it fires.
+ *   A more robust solution would poll for `.pagedjs_page` elements or wire into
+ *   the Paged.js Chunker lifecycle directly.
+ *
+ * Q5 — Trim-size switching requires full srcdoc replacement.
+ *   Changing the `size` descriptor in an existing @page rule after Paged.js has
+ *   run does NOT cause re-pagination. The polyfill must be re-invoked from
+ *   scratch, which means the entire iframe document must be replaced. This is
+ *   already how PagedPreview works (srcdoc reassignment), so trim switching is
+ *   handled correctly by adding `trimSize` to the useEffect dependency array.
  */
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -31,6 +66,13 @@ import { generatePageGeometry } from '../page-geometry';
 export interface PagedPreviewProps {
   /** The HTML string produced by parseMd() — book body content only. */
   html: string;
+  /**
+   * Trim size key — changing this prop causes PagedPreview to re-run its
+   * useEffect and re-read CSS custom properties from the parent frame, which
+   * by then have already been updated by App.tsx via style.setProperty.
+   * This is the mechanism that drives live trim-size switching.
+   */
+  trimSize?: string;
 }
 
 // ─── Page position helpers ────────────────────────────────────────────────────
@@ -210,7 +252,7 @@ ${html}
  *   After Paged.js fires its `rendered` event (communicated via postMessage
  *   from inside the iframe), the preview scrolls back to the same page index.
  */
-export function PagedPreview({ html }: PagedPreviewProps) {
+export function PagedPreview({ html, trimSize }: PagedPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   // Stores the page index to restore after the next repagination.
   const savedPageIndexRef = useRef<number>(0);
@@ -253,13 +295,15 @@ export function PagedPreview({ html }: PagedPreviewProps) {
     // needing to call document.open/close and to let the browser parse
     // cleanly from scratch on each update.
     //
-    // generatePageGeometry reads CSS custom properties from the parent frame's
-    // document root. The parent has the same token CSS loaded (same origin,
-    // same Vite module graph), so the resolved values are identical to what
-    // the iframe would read — but without the var()-in-@page limitation.
+    // generatePageGeometry re-reads CSS custom properties from the parent frame
+    // on every call. When trimSize changes, App.tsx has already called
+    // style.setProperty on document.documentElement before this effect runs, so
+    // getComputedStyle picks up the new --book-trim-width / --book-trim-height.
+    // See Quirk Q1 / Q2 / Q5 in the file-level JSDoc for why this full-replace
+    // strategy is required instead of patching the existing @page rule.
     const pageGeomCSS = generatePageGeometry(document.documentElement);
     iframe.srcdoc = buildSrcdoc(html, pageGeomCSS);
-  }, [html]);
+  }, [html, trimSize]);
 
   return (
     <iframe
