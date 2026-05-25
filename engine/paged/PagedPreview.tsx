@@ -75,6 +75,14 @@ export interface PagedPreviewProps {
    * live trim-size switching.
    */
   trimSize?: string;
+  /**
+   * Monotonically increasing counter supplied by the Zustand store.
+   * Incremented by setTokenOverride each time a CSS custom property is
+   * changed via the TokenPanel. Including this in the useEffect dependency
+   * array causes PagedPreview to rebuild and re-render the iframe document
+   * whenever any design token is updated.
+   */
+  tokenVersion?: number;
 }
 
 // ─── Page position helpers ────────────────────────────────────────────────────
@@ -254,7 +262,7 @@ ${html}
  *   After Paged.js fires its `rendered` event (communicated via postMessage
  *   from inside the iframe), the preview scrolls back to the same page index.
  */
-export function PagedPreview({ html, trimSize }: PagedPreviewProps) {
+export function PagedPreview({ html, trimSize, tokenVersion }: PagedPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   // Stores the page index to restore after the next repagination.
   const savedPageIndexRef = useRef<number>(0);
@@ -305,7 +313,7 @@ export function PagedPreview({ html, trimSize }: PagedPreviewProps) {
     // strategy is required instead of patching the existing @page rule.
     const pageGeomCSS = generatePageGeometry(document.documentElement);
     iframe.srcdoc = buildSrcdoc(html, pageGeomCSS);
-  }, [html, trimSize]);
+  }, [html, trimSize, tokenVersion]);
 
   return (
     <iframe

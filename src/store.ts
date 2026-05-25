@@ -42,6 +42,11 @@ export interface BookStore {
   setTokenOverride: (prop: string, value: string) => void;
   /** Remove all token overrides, reverting to the default theme values. */
   resetTokenOverrides: () => void;
+  /**
+   * Monotonically increasing counter, incremented by setTokenOverride.
+   * Pass as a prop to PagedPreview to trigger re-render on token changes.
+   */
+  tokenVersion: number;
 
   // ── Custom CSS ────────────────────────────────────────────────────────────
   /** User-authored CSS injected into the @layer overrides layer in the iframe. */
@@ -102,13 +107,15 @@ export const useBookStore = create<BookStore>((set) => ({
 
   // ── Token overrides ────────────────────────────────────────────────────────
   tokenOverrides: {},
+  tokenVersion: 0,
 
   setTokenOverride: (prop: string, value: string) =>
     set((state) => ({
       tokenOverrides: { ...state.tokenOverrides, [prop]: value },
+      tokenVersion: state.tokenVersion + 1,
     })),
 
-  resetTokenOverrides: () => set({ tokenOverrides: {} }),
+  resetTokenOverrides: () => set({ tokenOverrides: {}, tokenVersion: 0 }),
 
   // ── Custom CSS ─────────────────────────────────────────────────────────────
   customCss: '',

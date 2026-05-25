@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
+import TokenPanel from './components/TokenPanel.tsx';
 import TrimSizeSelector from './components/TrimSizeSelector.tsx';
 import { useBookStore } from './store.ts';
 import { CONCRETE_TRIM_SIZES, DEFAULT_TRIM } from './trimSizes.ts';
@@ -14,6 +15,7 @@ export default function App() {
   const trimSize = useBookStore((s) => s.trimSize);
   const customTrimWidth = useBookStore((s) => s.customTrimWidth);
   const customTrimHeight = useBookStore((s) => s.customTrimHeight);
+  const tokenVersion = useBookStore((s) => s.tokenVersion);
   const setSource = useBookStore((s) => s.setSource);
 
   // ── Debounce timer ───────────────────────────────────────────────────────
@@ -168,12 +170,15 @@ export default function App() {
         {/* Right panel: paged preview */}
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {html ? (
-            <PagedPreview html={html} trimSize={trimSize} />
+            <PagedPreview html={html} trimSize={trimSize} tokenVersion={tokenVersion} />
           ) : (
             <div style={{ padding: '2rem', color: '#888' }}>Rendering…</div>
           )}
         </div>
       </div>
+
+      {/* Token panel — fixed overlay, collapsed by default */}
+      <TokenPanel />
     </div>
   );
 }
