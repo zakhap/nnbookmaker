@@ -390,7 +390,7 @@
   }
 
   /* Back-reference arrow (↩) — suppress from print, reduce visual noise on screen */
-  .data-footnote-backref {
+  [data-footnote-backref] {
     text-decoration: none;
     margin-left: 0.25em;
     font-size: var(--caption-size);
