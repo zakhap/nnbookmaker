@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
+import TrimSizeSelector from './components/TrimSizeSelector.tsx';
 import { useBookStore } from './store.ts';
-import { DEFAULT_TRIM, TRIM_SIZES, TrimSizeKey } from './trimSizes.ts';
+import { DEFAULT_TRIM, TRIM_SIZES } from './trimSizes.ts';
 
 const DEBOUNCE_MS = 300;
 
@@ -11,8 +12,9 @@ export default function App() {
   const source = useBookStore((s) => s.source);
   const html = useBookStore((s) => s.html);
   const trimSize = useBookStore((s) => s.trimSize);
+  const customTrimWidth = useBookStore((s) => s.customTrimWidth);
+  const customTrimHeight = useBookStore((s) => s.customTrimHeight);
   const setSource = useBookStore((s) => s.setSource);
-  const setTrimSize = useBookStore((s) => s.setTrimSize);
 
   // ── Debounce timer ───────────────────────────────────────────────────────
   // Debounce is a UI concern: we do not want parseMd firing on every keystroke.
@@ -40,10 +42,24 @@ export default function App() {
   // so PagedPreview's useEffect always reads the already-updated values from
   // getComputedStyle when trimSize changes.
   useLayoutEffect(() => {
-    const { width, height } = TRIM_SIZES[trimSize] ?? TRIM_SIZES[DEFAULT_TRIM];
+    let width: string;
+    let height: string;
+    if (trimSize === 'custom') {
+      // Only apply when both dimensions are non-empty numbers.
+      const w = parseFloat(customTrimWidth);
+      const h = parseFloat(customTrimHeight);
+      if (!isNaN(w) && w > 0 && !isNaN(h) && h > 0) {
+        width = `${w}mm`;
+        height = `${h}mm`;
+      } else {
+        return; // incomplete custom — keep whatever was set previously
+      }
+    } else {
+      ({ width, height } = TRIM_SIZES[trimSize] ?? TRIM_SIZES[DEFAULT_TRIM]);
+    }
     document.documentElement.style.setProperty('--book-trim-width', width);
     document.documentElement.style.setProperty('--book-trim-height', height);
-  }, [trimSize]);
+  }, [trimSize, customTrimWidth, customTrimHeight]);
 
   // ── Textarea change handler ───────────────────────────────────────────────
   const handleSourceChange = useCallback(
@@ -93,27 +109,7 @@ export default function App() {
         }}
       >
         <span>nnbookmaker — book preview</span>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontWeight: 500 }}>Trim:</span>
-          <select
-            value={trimSize}
-            onChange={(e) => setTrimSize(e.target.value as TrimSizeKey)}
-            style={{
-              fontSize: '12px',
-              padding: '2px 6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              background: 'white',
-              cursor: 'pointer',
-            }}
-          >
-            {(Object.keys(TRIM_SIZES) as TrimSizeKey[]).map((key) => (
-              <option key={key} value={key}>
-                {TRIM_SIZES[key].label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <TrimSizeSelector />
       </header>
 
       {/* Two-column layout: editor | preview */}

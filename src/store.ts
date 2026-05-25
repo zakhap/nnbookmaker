@@ -52,6 +52,13 @@ export interface BookStore {
   /** Trim size key, e.g. '6x9' or '5x8'. */
   trimSize: TrimSizeKey;
   setTrimSize: (size: TrimSizeKey) => void;
+  /**
+   * Custom trim dimensions (in mm, as strings) used when trimSize === 'custom'.
+   * Stored as strings so number inputs stay in sync without coercion glitches.
+   */
+  customTrimWidth: string;
+  customTrimHeight: string;
+  setCustomTrim: (width: string, height: string) => void;
   /** Active theme name, e.g. 'default'. */
   activeTheme: string;
   setActiveTheme: (name: string) => void;
@@ -110,6 +117,11 @@ export const useBookStore = create<BookStore>((set) => ({
   // ── Project config ─────────────────────────────────────────────────────────
   trimSize: DEFAULT_TRIM,
   setTrimSize: (size: TrimSizeKey) => set({ trimSize: size }),
+
+  customTrimWidth: '',
+  customTrimHeight: '',
+  setCustomTrim: (width: string, height: string) =>
+    set({ customTrimWidth: width, customTrimHeight: height }),
 
   activeTheme: 'default',
   setActiveTheme: (name: string) => set({ activeTheme: name }),
