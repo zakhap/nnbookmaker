@@ -56,7 +56,7 @@ const geometry6x9 = {
 const css6x9 = generatePageCSS(geometry6x9);
 
 assert(
-  'contains @page rule',
+  'contains @page rule (for size)',
   css6x9.includes('@page {')
 );
 
@@ -66,23 +66,8 @@ assert(
 );
 
 assert(
-  'margin-top is set',
-  css6x9.includes('margin-top: 19.05mm')
-);
-
-assert(
-  'margin-bottom is set',
-  css6x9.includes('margin-bottom: 22.225mm')
-);
-
-assert(
-  'recto: margin-left = outside margin',
-  css6x9.includes('margin-left: 15.875mm')
-);
-
-assert(
-  'recto: margin-right = inside margin',
-  css6x9.includes('margin-right: 22.225mm')
+  'contains @page :right rule for recto',
+  css6x9.includes('@page :right {')
 );
 
 assert(
@@ -90,11 +75,50 @@ assert(
   css6x9.includes('@page :left {')
 );
 
+// Recto (@page :right): spine is on the left → margin-left = inside, margin-right = outside
+const rectoPart = css6x9.split('@page :right')[1].split('@page :left')[0];
+
 assert(
-  'verso: margin-left = inside (spine side for left pages)',
-  // In :left rule, inside and outside swap
-  css6x9.includes('@page :left') &&
-    css6x9.split('@page :left')[1].includes('margin-left: 22.225mm')
+  'recto: margin-top is set',
+  rectoPart.includes('margin-top: 19.05mm')
+);
+
+assert(
+  'recto: margin-bottom is set',
+  rectoPart.includes('margin-bottom: 22.225mm')
+);
+
+assert(
+  'recto: margin-left = inside (spine side on recto)',
+  rectoPart.includes('margin-left: 22.225mm')
+);
+
+assert(
+  'recto: margin-right = outside',
+  rectoPart.includes('margin-right: 15.875mm')
+);
+
+// Verso (@page :left): spine is on the right → margin-left = outside, margin-right = inside
+const versoPart = css6x9.split('@page :left')[1];
+
+assert(
+  'verso: margin-top is set',
+  versoPart.includes('margin-top: 19.05mm')
+);
+
+assert(
+  'verso: margin-bottom is set',
+  versoPart.includes('margin-bottom: 22.225mm')
+);
+
+assert(
+  'verso: margin-left = outside',
+  versoPart.includes('margin-left: 15.875mm')
+);
+
+assert(
+  'verso: margin-right = inside (spine side on verso)',
+  versoPart.includes('margin-right: 22.225mm')
 );
 
 assert(
