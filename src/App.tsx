@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect } from 'react';
-import PagedPreview from '../engine/paged/PagedPreview.tsx';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import PagedPreview, { type PagedPreviewHandle } from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
 import CustomCssEditor from './components/CustomCssEditor.tsx';
 import ManuscriptEditor from './components/ManuscriptEditor.tsx';
@@ -18,6 +18,13 @@ export default function App() {
   const tokenVersion = useBookStore((s) => s.tokenVersion);
   const customCss = useBookStore((s) => s.customCss);
   const setSource = useBookStore((s) => s.setSource);
+
+  // ── PDF export ───────────────────────────────────────────────────────────
+  const previewRef = useRef<PagedPreviewHandle>(null);
+
+  function handleExportPdf() {
+    previewRef.current?.triggerPrint();
+  }
 
   // ── Initialise with sample manuscript ────────────────────────────────────
   // Call setSource once on mount so the store runs parseMd on the initial text.
@@ -75,6 +82,24 @@ export default function App() {
       >
         <span>nnbookmaker — book preview</span>
         <TrimSizeSelector />
+        <div style={{ marginLeft: 'auto' }}>
+          <button
+            onClick={handleExportPdf}
+            style={{
+              padding: '4px 12px',
+              fontSize: '12px',
+              fontFamily: 'inherit',
+              background: '#1a1a1a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              letterSpacing: '0.01em',
+            }}
+          >
+            Export PDF
+          </button>
+        </div>
       </header>
 
       {/* Two-column layout: editor | preview */}
@@ -115,7 +140,7 @@ export default function App() {
         {/* Right panel: paged preview */}
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {html ? (
-            <PagedPreview html={html} trimSize={trimSize} tokenVersion={tokenVersion} customCss={customCss} />
+            <PagedPreview ref={previewRef} html={html} trimSize={trimSize} tokenVersion={tokenVersion} customCss={customCss} />
           ) : (
             <div style={{ padding: '2rem', color: '#888' }}>Rendering…</div>
           )}

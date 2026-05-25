@@ -44,7 +44,7 @@
  *   handled correctly by adding `trimSize` to the useEffect dependency array.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 
 // Token CSS layers — imported as raw strings so we can inline them
 // into the iframe document without a separate network request.
@@ -60,6 +60,18 @@ import overridesCss from '../../tokens/overrides.css?raw';
 // Page geometry — resolves CSS custom property tokens to concrete @page rules
 // (spec §3.4 / D-08b: var() does not cascade into @page across paged engines).
 import { generatePageGeometry } from '../page-geometry';
+
+// ─── Imperative handle ────────────────────────────────────────────────────────
+
+/**
+ * Methods exposed to the parent via `ref` when using `forwardRef`.
+ * The parent calls `previewRef.current.triggerPrint()` to open the browser
+ * print dialog scoped to the iframe document (which produces a clean PDF via
+ * "Save as PDF" in the system print dialog).
+ */
+export interface PagedPreviewHandle {
+  triggerPrint: () => void;
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -231,6 +243,23 @@ ${pageGeomCSS}
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       margin: 0 auto 2rem;
     }
+
+    /* Print / PDF export — strip the preview chrome so the PDF contains
+       clean white pages at the exact @page trim size. Paged.js handles all
+       the actual layout; we only need to remove the background colour, the
+       page gap, and the drop-shadow that would otherwise appear in the PDF. */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+      }
+
+      .pagedjs_page {
+        box-shadow: none;
+        margin: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -240,7 +269,9 @@ ${html}
   <!-- Paged.js polyfill — auto-paginates the document on load -->
   <script src="/paged.polyfill.js"></script>
   <!-- Notify parent frame when Paged.js finishes rendering so it can
-       restore the scroll position to the previously-visible page. -->
+       restore the scroll position to the previously-visible page.
+       Also handles { type: 'print' } messages from the parent, which trigger
+       window.print() on the iframe document for proofing PDF export. -->
   <script>
     (function () {
       function notifyRendered() {
@@ -259,6 +290,15 @@ ${html}
           // may still be paginating when this fires, causing a scroll position
           // that doesn't line up with the correct page.
           setTimeout(notifyRendered, 800);
+        }
+      });
+
+      // Listen for { type: 'print' } from the parent frame.
+      // Calling window.print() from inside the iframe prints only the iframe
+      // document (the fully-paginated book), not the surrounding app shell.
+      window.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'print') {
+          window.print();
         }
       });
     })();
@@ -288,71 +328,83 @@ ${html}
  *   After Paged.js fires its `rendered` event (communicated via postMessage
  *   from inside the iframe), the preview scrolls back to the same page index.
  */
-export function PagedPreview({ html, trimSize, tokenVersion, customCss }: PagedPreviewProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  // Stores the page index to restore after the next repagination.
-  const savedPageIndexRef = useRef<number>(0);
+export const PagedPreview = forwardRef<PagedPreviewHandle, PagedPreviewProps>(
+  function PagedPreview({ html, trimSize, tokenVersion, customCss }, ref) {
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    // Stores the page index to restore after the next repagination.
+    const savedPageIndexRef = useRef<number>(0);
 
-  // Listen for the pagedjs:rendered postMessage from the iframe.
-  // When it arrives, scroll the iframe back to the saved page index.
-  const handleMessage = useCallback((event: MessageEvent) => {
-    // Ignore messages that did not originate from our iframe's content window
-    // to guard against third-party postMessage spoofing.
-    if (event.source !== iframeRef.current?.contentWindow) return;
-    if (
-      event.data &&
-      typeof event.data === 'object' &&
-      event.data.type === 'pagedjs:rendered'
-    ) {
-      const iframe = iframeRef.current;
-      if (iframe) {
-        scrollToPageIndex(iframe, savedPageIndexRef.current);
+    // Expose triggerPrint() to the parent component via the forwarded ref.
+    // Sends a { type: 'print' } message into the iframe so the iframe calls
+    // window.print() — which prints only the paginated book document, not the
+    // surrounding app shell.
+    useImperativeHandle(ref, () => ({
+      triggerPrint() {
+        iframeRef.current?.contentWindow?.postMessage({ type: 'print' }, '*');
+      },
+    }));
+
+    // Listen for the pagedjs:rendered postMessage from the iframe.
+    // When it arrives, scroll the iframe back to the saved page index.
+    const handleMessage = useCallback((event: MessageEvent) => {
+      // Ignore messages that did not originate from our iframe's content window
+      // to guard against third-party postMessage spoofing.
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      if (
+        event.data &&
+        typeof event.data === 'object' &&
+        event.data.type === 'pagedjs:rendered'
+      ) {
+        const iframe = iframeRef.current;
+        if (iframe) {
+          scrollToPageIndex(iframe, savedPageIndexRef.current);
+        }
       }
-    }
-  }, []);
+    }, []);
 
-  useEffect(() => {
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handleMessage]);
+    useEffect(() => {
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }, [handleMessage]);
 
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
+    useEffect(() => {
+      const iframe = iframeRef.current;
+      if (!iframe) return;
 
-    // Save the current visible page index before we wipe the document.
-    savedPageIndexRef.current = readVisiblePageIndex(iframe);
+      // Save the current visible page index before we wipe the document.
+      savedPageIndexRef.current = readVisiblePageIndex(iframe);
 
-    // Write the full document into the iframe. Using srcdoc attribute keeps
-    // the iframe same-origin (about:srcdoc), which lets the polyfill script
-    // load from the parent origin via absolute /paged.polyfill.js path.
-    //
-    // We reassign srcdoc rather than contentDocument.write() to avoid
-    // needing to call document.open/close and to let the browser parse
-    // cleanly from scratch on each update.
-    //
-    // generatePageGeometry re-reads CSS custom properties from the parent frame
-    // on every call. App.tsx uses useLayoutEffect to write CSS vars synchronously
-    // before this useEffect reads them, so getComputedStyle always picks up the
-    // new --book-trim-width / --book-trim-height when trimSize changes.
-    // See Quirk Q1 / Q2 / Q5 in the file-level JSDoc for why this full-replace
-    // strategy is required instead of patching the existing @page rule.
-    const pageGeomCSS = generatePageGeometry(document.documentElement);
-    iframe.srcdoc = buildSrcdoc(html, pageGeomCSS, customCss);
-  }, [html, trimSize, tokenVersion, customCss]);
+      // Write the full document into the iframe. Using srcdoc attribute keeps
+      // the iframe same-origin (about:srcdoc), which lets the polyfill script
+      // load from the parent origin via absolute /paged.polyfill.js path.
+      //
+      // We reassign srcdoc rather than contentDocument.write() to avoid
+      // needing to call document.open/close and to let the browser parse
+      // cleanly from scratch on each update.
+      //
+      // generatePageGeometry re-reads CSS custom properties from the parent frame
+      // on every call. App.tsx uses useLayoutEffect to write CSS vars synchronously
+      // before this useEffect reads them, so getComputedStyle always picks up the
+      // new --book-trim-width / --book-trim-height when trimSize changes.
+      // See Quirk Q1 / Q2 / Q5 in the file-level JSDoc for why this full-replace
+      // strategy is required instead of patching the existing @page rule.
+      const pageGeomCSS = generatePageGeometry(document.documentElement);
+      iframe.srcdoc = buildSrcdoc(html, pageGeomCSS, customCss);
+    }, [html, trimSize, tokenVersion, customCss]);
 
-  return (
-    <iframe
-      ref={iframeRef}
-      title="Book Preview"
-      style={{
-        width: '100%',
-        height: '100%',
-        border: 'none',
-        display: 'block',
-      }}
-    />
-  );
-}
+    return (
+      <iframe
+        ref={iframeRef}
+        title="Book Preview"
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          display: 'block',
+        }}
+      />
+    );
+  },
+);
 
 export default PagedPreview;
