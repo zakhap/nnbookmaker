@@ -9,7 +9,7 @@
  * Token CSS layers are inlined as <style> tags.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 // Token CSS layers — imported as raw strings so we can inline them
 // into the iframe document without a separate network request.
@@ -29,6 +29,52 @@ export interface PagedPreviewProps {
   html: string;
 }
 
+// ─── Page position helpers ────────────────────────────────────────────────────
+
+/**
+ * Read the index of the first .pagedjs_page element that is currently visible
+ * in the iframe's viewport (i.e. its top edge is at or below scrollY).
+ * Returns 0 if the iframe is not yet ready or no pages exist.
+ */
+function readVisiblePageIndex(iframe: HTMLIFrameElement): number {
+  try {
+    const doc = iframe.contentDocument;
+    if (!doc) return 0;
+    const pages = doc.querySelectorAll<HTMLElement>('.pagedjs_page');
+    if (pages.length === 0) return 0;
+    const scrollY = doc.documentElement.scrollTop || doc.body.scrollTop;
+    // Find the last page whose top edge is at or above the current scrollY.
+    // That is the page that is "in view" at the top of the viewport.
+    let idx = 0;
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i].offsetTop <= scrollY + 1) {
+        idx = i;
+      }
+    }
+    return idx;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Scroll the iframe to the page at the given index (0-based).
+ * Reads the offsetTop of the nth .pagedjs_page element and sets scrollTop.
+ */
+function scrollToPageIndex(iframe: HTMLIFrameElement, idx: number): void {
+  try {
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+    const pages = doc.querySelectorAll<HTMLElement>('.pagedjs_page');
+    const target = pages[Math.min(idx, pages.length - 1)];
+    if (target) {
+      doc.documentElement.scrollTop = target.offsetTop;
+    }
+  } catch {
+    // iframe may not be accessible — ignore
+  }
+}
+
 // ─── srcdoc builder ──────────────────────────────────────────────────────────
 
 /**
@@ -39,6 +85,9 @@ export interface PagedPreviewProps {
  *   2. Minimal @page rule for the default 6×9 trim size
  *   3. Book content wrapped in <div id="book-content">
  *   4. Paged.js polyfill script — auto-runs on window load
+ *   5. A small inline script that posts a "pagedjs:rendered" message to the
+ *      parent window once Paged.js fires its `rendered` event, so the parent
+ *      can restore scroll position after repagination completes.
  *
  * The script src is an absolute path served from /public by Vite dev server
  * and from the build output in production. The iframe inherits the same
@@ -92,6 +141,27 @@ ${html}
   </div>
   <!-- Paged.js polyfill — auto-paginates the document on load -->
   <script src="/paged.polyfill.js"></script>
+  <!-- Notify parent frame when Paged.js finishes rendering so it can
+       restore the scroll position to the previously-visible page. -->
+  <script>
+    (function () {
+      function notifyRendered() {
+        window.parent.postMessage({ type: 'pagedjs:rendered' }, '*');
+      }
+      // PagedPolyfill may already exist if the polyfill script ran
+      // synchronously, or it may not be set up yet — wait for DOMContentLoaded
+      // to be safe, then hook into the rendered event.
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.PagedPolyfill && typeof window.PagedPolyfill.on === 'function') {
+          window.PagedPolyfill.on('rendered', notifyRendered);
+        } else {
+          // Fallback: if the Paged.js hook API is unavailable, fire after a
+          // short delay to allow pagination to finish.
+          setTimeout(notifyRendered, 800);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -111,13 +181,43 @@ ${html}
  *   - User custom CSS (injected into the overrides layer inside the iframe)
  *     cannot bleed into the app shell.
  *   - React reconciliation never sees the Paged.js-generated page nodes.
+ *
+ * Position restore:
+ *   Before writing new srcdoc, the current visible page index is saved.
+ *   After Paged.js fires its `rendered` event (communicated via postMessage
+ *   from inside the iframe), the preview scrolls back to the same page index.
  */
 export function PagedPreview({ html }: PagedPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // Stores the page index to restore after the next repagination.
+  const savedPageIndexRef = useRef<number>(0);
+
+  // Listen for the pagedjs:rendered postMessage from the iframe.
+  // When it arrives, scroll the iframe back to the saved page index.
+  const handleMessage = useCallback((event: MessageEvent) => {
+    if (
+      event.data &&
+      typeof event.data === 'object' &&
+      event.data.type === 'pagedjs:rendered'
+    ) {
+      const iframe = iframeRef.current;
+      if (iframe) {
+        scrollToPageIndex(iframe, savedPageIndexRef.current);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handleMessage]);
 
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
+
+    // Save the current visible page index before we wipe the document.
+    savedPageIndexRef.current = readVisiblePageIndex(iframe);
 
     // Write the full document into the iframe. Using srcdoc attribute keeps
     // the iframe same-origin (about:srcdoc), which lets the polyfill script
