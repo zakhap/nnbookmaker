@@ -40,6 +40,8 @@ export interface BookStore {
   tokenOverrides: Record<string, string>;
   /** Set (or update) a single CSS custom property override. */
   setTokenOverride: (prop: string, value: string) => void;
+  /** Remove a single token override, reverting that property to its CSS default. */
+  removeTokenOverride: (prop: string) => void;
   /** Remove all token overrides, reverting to the default theme values. */
   resetTokenOverrides: () => void;
   /**
@@ -115,7 +117,26 @@ export const useBookStore = create<BookStore>((set) => ({
       tokenVersion: state.tokenVersion + 1,
     })),
 
-  resetTokenOverrides: () => set({ tokenOverrides: {}, tokenVersion: 0 }),
+  removeTokenOverride: (prop: string) =>
+    set((state) => {
+      if (typeof document !== 'undefined') {
+        document.documentElement.style.removeProperty(prop);
+      }
+      const next = { ...state.tokenOverrides };
+      delete next[prop];
+      return { tokenOverrides: next, tokenVersion: state.tokenVersion + 1 };
+    }),
+
+  resetTokenOverrides: () => {
+    set((state) => {
+      if (typeof document !== 'undefined') {
+        Object.keys(state.tokenOverrides).forEach((prop) => {
+          document.documentElement.style.removeProperty(prop);
+        });
+      }
+      return { tokenOverrides: {}, tokenVersion: state.tokenVersion + 1 };
+    });
+  },
 
   // ── Custom CSS ─────────────────────────────────────────────────────────────
   customCss: '',

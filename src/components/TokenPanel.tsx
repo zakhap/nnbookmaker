@@ -46,7 +46,7 @@ function readCssProp(prop: string, fallback: string): string {
  * Returns `fallback` if the value cannot be parsed.
  */
 function parseLengthValue(raw: string, unit: string, fallback: number): number {
-  const n = parseFloat(raw.replace(unit, ''));
+  const n = parseFloat(raw.replace(new RegExp(unit + '$'), ''));
   return isFinite(n) ? n : fallback;
 }
 
@@ -125,7 +125,6 @@ interface SliderRowProps {
   max: number;
   step: number;
   defaultValue: number;
-  unit?: string;
   /** If provided, display this suffix after the value (e.g. "pt") */
   displayUnit?: string;
   /** Convert the raw CSS string to a display number */
@@ -267,6 +266,7 @@ function NumberRow({
  */
 export default function TokenPanel() {
   const setTokenOverride = useBookStore((s) => s.setTokenOverride);
+  const removeTokenOverride = useBookStore((s) => s.removeTokenOverride);
 
   // ── Collapse state ───────────────────────────────────────────────────────
   const [open, setOpen] = useState(false);
@@ -296,11 +296,16 @@ export default function TokenPanel() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const checked = e.target.checked;
       setIndentEnabled(checked);
-      const cssValue = checked ? '1.5em' : '0';
-      document.documentElement.style.setProperty('--book-para-indent', cssValue);
-      setTokenOverride('--book-para-indent', cssValue);
+      if (checked) {
+        // Remove inline override so the CSS default (calc-based) takes effect
+        document.documentElement.style.removeProperty('--book-para-indent');
+        removeTokenOverride('--book-para-indent');
+      } else {
+        document.documentElement.style.setProperty('--book-para-indent', '0');
+        setTokenOverride('--book-para-indent', '0');
+      }
     },
-    [setTokenOverride]
+    [setTokenOverride, removeTokenOverride]
   );
 
   if (!open) {
