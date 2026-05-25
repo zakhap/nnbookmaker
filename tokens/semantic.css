@@ -65,11 +65,11 @@
        h1 at ~35pt needs 3 baselines (42pt) to avoid cramping.
        h2 at ~26pt needs 2 baselines (28pt).
        h3 at ~19.5pt needs 2 baselines (28pt).
-       h4 at ~14.7pt fits in 1 baseline (14pt) — allow 1 baseline.        */
+       h4 at ~14.7pt needs 2 baselines (28pt) — font exceeds one baseline. */
     --heading-1-leading: calc(3 * var(--book-baseline));
     --heading-2-leading: calc(2 * var(--book-baseline));
     --heading-3-leading: calc(2 * var(--book-baseline));
-    --heading-4-leading: calc(1 * var(--book-baseline));
+    --heading-4-leading: calc(2 * var(--book-baseline));
 
     /* ── Heading spacing — all multiples of --book-baseline ─────────────
        Space BEFORE is larger than space AFTER to maintain visual grouping.

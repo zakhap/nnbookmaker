@@ -47,6 +47,7 @@ A theme is a JSON file that declares a named set of token overrides. Applying a 
 | `--rhythm-h2-before` | `3` | Baselines above h2 |
 | `--rhythm-h2-after` | `1` | Baselines below h2 |
 | `--rhythm-h3-before` | `2` | Baselines above h3 |
+| `--rhythm-h3-after` | `0` | Baselines of space below h3 heading |
 | `--rhythm-h4-before` | `2` | Baselines above h4 |
 | `--rhythm-h5-before` | `1` | Baselines above h5 |
 | `--rhythm-h6-before` | `1` | Baselines above h6 |
