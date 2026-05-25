@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "tsc -p tsconfig.engine.json && node engine/pipeline/test.mjs"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.5.0",
@@ -24,6 +25,7 @@
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
     "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0",
     "vfile": "^6.0.3",
     "zustand": "^5.0.13"
   },

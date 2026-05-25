@@ -1,11 +1,23 @@
 /**
  * engine/pipeline — unified: parse → transform → HTML
  *
- * Converts a Markdown string (Pandoc-flavored) to HTML using:
+ * Converts a Markdown string to HTML using:
  *   remark-parse → remark-frontmatter → remark-gfm → remark-directive
  *   → remark-math → remark-rehype → rehype-stringify
  *
  * Returns both the HTML string and the parsed frontmatter object.
+ *
+ * ── Directive syntax note ──────────────────────────────────────────────────────
+ * The spec design doc references Pandoc span syntax `[text]{.class}` and fenced
+ * div syntax `:::{.verse}`, but this tool uses remark-directive syntax instead:
+ *
+ *   - Inline spans:  `:span[text]{.class}`    (remark-directive textDirective)
+ *   - Leaf blocks:   `::name{.class}`          (remark-directive leafDirective)
+ *   - Container divs: `:::name` or `:::name{.extra-class}`
+ *                                              (remark-directive containerDirective)
+ *
+ * This is a deliberate choice — remark-directive is the authoring contract for
+ * this tool. Pandoc syntax is NOT supported.
  */
 
 import rehypeStringify from 'rehype-stringify';
@@ -46,7 +58,7 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
       result[key] = true;
     } else if (value === 'false') {
       result[key] = false;
-    } else if (value !== '' && !isNaN(Number(value))) {
+    } else if (value !== '' && !isNaN(Number(value)) && isFinite(Number(value))) {
       result[key] = Number(value);
     } else {
       result[key] = value;
@@ -88,10 +100,19 @@ function remarkDirectiveToHtml() {
         const attrs = n.attributes ?? {};
         const hProps: Record<string, unknown> = {};
 
-        // class attribute (from .foo syntax, stored as "class" key)
+        // className: directive name is the first class unless it's the same as the
+        // tag name (i.e. the generic :span wrapper), followed by any .foo attrs.
+        // e.g. :::verse             → class="verse"
+        //      :::callout{.warning} → class="callout warning"
+        //      :span[text]{.small}  → class="small"   (name "span" == tag, skip)
+        const classes: string[] = n.name !== tagName ? [n.name] : [];
         if (attrs['class']) {
-          hProps['className'] = String(attrs['class']).split(/\s+/);
+          classes.push(...String(attrs['class']).split(/\s+/));
         }
+        if (classes.length > 0) {
+          hProps['className'] = classes;
+        }
+
         // id
         if (attrs['id']) {
           hProps['id'] = attrs['id'];
@@ -100,12 +121,6 @@ function remarkDirectiveToHtml() {
         for (const [k, v] of Object.entries(attrs)) {
           if (k === 'class' || k === 'id') continue;
           hProps[k] = v;
-        }
-
-        // Also use the directive name as a class if no class was given
-        // e.g. :::verse  →  <div class="verse">
-        if (!attrs['class'] && n.name) {
-          hProps['className'] = [n.name];
         }
 
         n.data.hName = tagName;
@@ -133,33 +148,53 @@ function remarkExtractFrontmatter(
   };
 }
 
+// ─── Base processor (module-scoped, frozen) ───────────────────────────────────
+// Contains only the stateless remark-phase plugins (parse + pure transforms).
+// Frozen so unified can cache the parse/validate work.
+//
+// NOTE: remarkRehype and rehypeStringify are intentionally NOT in the base —
+// they would move the tree to hast before the per-call fork plugins run,
+// making it impossible for fork plugins to see mdast nodes (yaml, directives).
+// The fork appends plugins at the END of the transform chain, so any plugin
+// added via fork().use() after a remark→hast bridge sees only hast nodes.
+
+const _baseProcessor = unified()
+  .use(remarkParse)
+  .use(remarkFrontmatter, ['yaml'])
+  .use(remarkGfm)
+  .use(remarkDirective)
+  .use(remarkMath)
+  .freeze();
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
  * Parse a Markdown string through the full unified pipeline and return
  * both the rendered HTML and the parsed YAML frontmatter.
+ *
+ * Forks the frozen base processor on each call and appends:
+ *   1. remarkExtractFrontmatter — reads yaml nodes (mdast phase, stateful)
+ *   2. remarkDirectiveToHtml    — wires directive nodes to hast (mdast phase)
+ *   3. remarkRehype             — converts mdast → hast
+ *   4. rehypeStringify          — serialises hast → HTML string
+ *
+ * The remark→rehype bridge must come AFTER the stateful mdast plugins so those
+ * plugins see the original mdast tree, not the converted hast tree.
+ * safe: allowDangerousHtml — manuscript is trusted author input.
  */
 export async function parseMd(markdown: string): Promise<PipelineResult> {
-  const frontmatterStore: { matter: Record<string, unknown> } = {
-    matter: {},
-  };
+  const store: { matter: Record<string, unknown> } = { matter: {} };
 
-  const processor = unified()
-    .use(remarkParse)
-    .use(remarkFrontmatter, ['yaml'])
-    .use(remarkExtractFrontmatter, frontmatterStore)
-    .use(remarkGfm)
-    .use(remarkDirective)
+  const file = await _baseProcessor()
+    .use(remarkExtractFrontmatter, store)
     .use(remarkDirectiveToHtml)
-    .use(remarkMath)
     .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeStringify, { allowDangerousHtml: true });
-
-  const file = await processor.process(markdown);
+    .use(rehypeStringify, { allowDangerousHtml: true })
+    .process(markdown);
 
   return {
     html: String(file),
-    frontmatter: frontmatterStore.matter,
+    frontmatter: store.matter,
   };
 }
 
