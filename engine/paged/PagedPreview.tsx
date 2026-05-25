@@ -22,6 +22,10 @@ import semanticCss from '../../tokens/semantic.css?raw';
 import componentsCss from '../../tokens/components.css?raw';
 import overridesCss from '../../tokens/overrides.css?raw';
 
+// Page geometry — resolves CSS custom property tokens to concrete @page rules
+// (spec §3.4 / D-08b: var() does not cascade into @page across paged engines).
+import { generatePageGeometry } from '../page-geometry';
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface PagedPreviewProps {
@@ -85,7 +89,8 @@ function scrollToPageIndex(iframe: HTMLIFrameElement, idx: number): void {
  *
  * The document includes:
  *   1. Inlined token CSS layers (in declaration order)
- *   2. Minimal @page rule for the default 6×9 trim size
+ *   2. Resolved @page geometry rule (literal values — no var() — generated
+ *      by reading CSS custom properties in the parent frame; see §3.4 / D-08b)
  *   3. Book content wrapped in <div id="book-content">
  *   4. Paged.js polyfill script — auto-runs on window load
  *   5. A small inline script that posts a "pagedjs:rendered" message to the
@@ -95,8 +100,12 @@ function scrollToPageIndex(iframe: HTMLIFrameElement, idx: number): void {
  * The script src is an absolute path served from /public by Vite dev server
  * and from the build output in production. The iframe inherits the same
  * origin so /paged.polyfill.js resolves correctly.
+ *
+ * @param html        Book body HTML string from parseMd()
+ * @param pageGeomCSS Resolved @page CSS from generatePageGeometry() — must
+ *                    contain literal length values, not var() references
  */
-function buildSrcdoc(html: string): string {
+function buildSrcdoc(html: string, pageGeomCSS: string): string {
   const inlineStyles = [
     layersCss,
     primitivesCss,
@@ -114,15 +123,8 @@ function buildSrcdoc(html: string): string {
   <style>
 ${inlineStyles}
   </style>
-  <style>
-    /* Paged.js page shell */
-    @page {
-      size: var(--book-trim-width, 6in) var(--book-trim-height, 9in);
-      margin-top: var(--book-margin-top, 0.75in);
-      margin-bottom: var(--book-margin-bottom, 0.875in);
-      margin-left: var(--book-margin-outside, 0.625in);
-      margin-right: var(--book-margin-inside, 0.875in);
-    }
+  <style id="page-geometry">
+${pageGeomCSS}
 
     /* Preview chrome — visible pages on a neutral background */
     body {
@@ -235,7 +237,13 @@ export function PagedPreview({ html }: PagedPreviewProps) {
     // We reassign srcdoc rather than contentDocument.write() to avoid
     // needing to call document.open/close and to let the browser parse
     // cleanly from scratch on each update.
-    iframe.srcdoc = buildSrcdoc(html);
+    //
+    // generatePageGeometry reads CSS custom properties from the parent frame's
+    // document root. The parent has the same token CSS loaded (same origin,
+    // same Vite module graph), so the resolved values are identical to what
+    // the iframe would read — but without the var()-in-@page limitation.
+    const pageGeomCSS = generatePageGeometry(document.documentElement);
+    iframe.srcdoc = buildSrcdoc(html, pageGeomCSS);
   }, [html]);
 
   return (
