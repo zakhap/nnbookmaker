@@ -118,6 +118,7 @@ export const useBookStore = create<BookStore>((set) => ({
   trimSize: DEFAULT_TRIM,
   setTrimSize: (size: TrimSizeKey) => set({ trimSize: size }),
 
+  // Only meaningful when trimSize === 'custom'; ignored for all concrete sizes.
   customTrimWidth: '',
   customTrimHeight: '',
   setCustomTrim: (width: string, height: string) =>

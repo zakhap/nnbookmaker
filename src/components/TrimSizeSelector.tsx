@@ -7,7 +7,7 @@
  */
 
 import { useBookStore } from '../store.ts';
-import { TRIM_SIZES, TrimSizeKey } from '../trimSizes.ts';
+import { TRIM_SIZE_LABELS, TRIM_SIZE_ORDER, TrimSizeKey } from '../trimSizes.ts';
 
 const SELECT_STYLE: React.CSSProperties = {
   fontSize: '12px',
@@ -44,9 +44,9 @@ export default function TrimSizeSelector() {
         onChange={(e) => setTrimSize(e.target.value as TrimSizeKey)}
         style={SELECT_STYLE}
       >
-        {(Object.keys(TRIM_SIZES) as TrimSizeKey[]).map((key) => (
+        {TRIM_SIZE_ORDER.map((key) => (
           <option key={key} value={key}>
-            {TRIM_SIZES[key].label}
+            {TRIM_SIZE_LABELS[key]}
           </option>
         ))}
       </select>
@@ -64,7 +64,7 @@ export default function TrimSizeSelector() {
             aria-label="Custom trim width in mm"
             style={NUMBER_INPUT_STYLE}
           />
-          <span style={{ color: '#888' }}>×</span>
+          <span aria-hidden="true" style={{ color: '#888' }}>×</span>
           <input
             type="number"
             min={50}
@@ -76,7 +76,7 @@ export default function TrimSizeSelector() {
             aria-label="Custom trim height in mm"
             style={NUMBER_INPUT_STYLE}
           />
-          <span style={{ color: '#888', fontSize: '11px' }}>mm</span>
+          <span aria-hidden="true" style={{ color: '#888', fontSize: '11px' }}>mm</span>
         </>
       )}
     </label>

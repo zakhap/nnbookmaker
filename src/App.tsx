@@ -3,7 +3,7 @@ import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
 import TrimSizeSelector from './components/TrimSizeSelector.tsx';
 import { useBookStore } from './store.ts';
-import { DEFAULT_TRIM, TRIM_SIZES } from './trimSizes.ts';
+import { CONCRETE_TRIM_SIZES, DEFAULT_TRIM } from './trimSizes.ts';
 
 const DEBOUNCE_MS = 300;
 
@@ -45,17 +45,16 @@ export default function App() {
     let width: string;
     let height: string;
     if (trimSize === 'custom') {
-      // Only apply when both dimensions are non-empty numbers.
       const w = parseFloat(customTrimWidth);
       const h = parseFloat(customTrimHeight);
-      if (!isNaN(w) && w > 0 && !isNaN(h) && h > 0) {
-        width = `${w}mm`;
-        height = `${h}mm`;
-      } else {
-        return; // incomplete custom — keep whatever was set previously
+      if (w >= 50 && w <= 400 && h >= 50 && h <= 600) {
+        document.documentElement.style.setProperty('--book-trim-width', `${w}mm`);
+        document.documentElement.style.setProperty('--book-trim-height', `${h}mm`);
       }
+      // If out of range, leave existing tokens in place
+      return;
     } else {
-      ({ width, height } = TRIM_SIZES[trimSize] ?? TRIM_SIZES[DEFAULT_TRIM]);
+      ({ width, height } = CONCRETE_TRIM_SIZES[trimSize] ?? CONCRETE_TRIM_SIZES[DEFAULT_TRIM]);
     }
     document.documentElement.style.setProperty('--book-trim-width', width);
     document.documentElement.style.setProperty('--book-trim-height', height);
