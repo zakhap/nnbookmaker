@@ -1,0 +1,116 @@
+/**
+ * src/store.ts — Central Zustand store for nnbookmaker
+ *
+ * Holds all shared application state: manuscript source, parsed HTML +
+ * frontmatter, CSS token overrides, custom CSS, and project configuration
+ * (trim size, active theme).
+ *
+ * setSource triggers parseMd asynchronously. A generation counter guards
+ * against stale responses: if a newer setSource call completes parseMd before
+ * an older one, the older result is silently discarded.
+ */
+
+import { create } from 'zustand';
+import { parseMd } from '../engine/pipeline/index.ts';
+
+// ─── Store shape ──────────────────────────────────────────────────────────────
+
+export interface BookStore {
+  // ── Manuscript ────────────────────────────────────────────────────────────
+  /** Raw Markdown source text. */
+  source: string;
+  /** Rendered HTML produced by parseMd(). */
+  html: string;
+  /** Frontmatter key/value pairs extracted from the YAML block. */
+  frontmatter: Record<string, unknown>;
+  /**
+   * Update the source and trigger an async parseMd run.
+   * The store's html and frontmatter are updated once parseMd resolves.
+   * A generation counter prevents stale results from overwriting newer ones.
+   */
+  setSource: (src: string) => void;
+  /** Directly set the rendered HTML (exposed for testing / external callers). */
+  setHtml: (html: string) => void;
+
+  // ── Token overrides ───────────────────────────────────────────────────────
+  /**
+   * Map of CSS custom property name → override value.
+   * e.g. { '--book-trim-width': '152.4mm', '--book-trim-height': '228.6mm' }
+   * Components read this to apply token overrides on top of the default theme.
+   */
+  tokenOverrides: Record<string, string>;
+  /** Set (or update) a single CSS custom property override. */
+  setTokenOverride: (prop: string, value: string) => void;
+  /** Remove all token overrides, reverting to the default theme values. */
+  resetTokenOverrides: () => void;
+
+  // ── Custom CSS ────────────────────────────────────────────────────────────
+  /** User-authored CSS injected into the @layer overrides layer in the iframe. */
+  customCss: string;
+  setCustomCss: (css: string) => void;
+
+  // ── Project config ────────────────────────────────────────────────────────
+  /** Trim size key, e.g. '6x9' or '5x8'. */
+  trimSize: string;
+  setTrimSize: (size: string) => void;
+  /** Active theme name, e.g. 'default'. */
+  activeTheme: string;
+  setActiveTheme: (name: string) => void;
+}
+
+// ─── Internal generation counter ─────────────────────────────────────────────
+// Lives outside the store so it does not cause unnecessary re-renders.
+// Incremented each time setSource fires parseMd; the resolved callback
+// checks that its captured gen still matches before writing to the store.
+let _parseMdGeneration = 0;
+
+// ─── Store factory ────────────────────────────────────────────────────────────
+
+export const useBookStore = create<BookStore>((set) => ({
+  // ── Manuscript ─────────────────────────────────────────────────────────────
+  source: '',
+  html: '',
+  frontmatter: {},
+
+  setSource: (src: string) => {
+    // Update source immediately so the editor always reflects user input.
+    set({ source: src });
+
+    // Capture the generation for this invocation.
+    const gen = ++_parseMdGeneration;
+
+    parseMd(src)
+      .then(({ html, frontmatter }) => {
+        // Only apply the result if no newer setSource call has superseded this one.
+        if (gen === _parseMdGeneration) {
+          set({ html, frontmatter });
+        }
+      })
+      .catch((err) => {
+        console.error('parseMd failed:', err);
+      });
+  },
+
+  setHtml: (html: string) => set({ html }),
+
+  // ── Token overrides ────────────────────────────────────────────────────────
+  tokenOverrides: {},
+
+  setTokenOverride: (prop: string, value: string) =>
+    set((state) => ({
+      tokenOverrides: { ...state.tokenOverrides, [prop]: value },
+    })),
+
+  resetTokenOverrides: () => set({ tokenOverrides: {} }),
+
+  // ── Custom CSS ─────────────────────────────────────────────────────────────
+  customCss: '',
+  setCustomCss: (css: string) => set({ customCss: css }),
+
+  // ── Project config ─────────────────────────────────────────────────────────
+  trimSize: '6x9',
+  setTrimSize: (size: string) => set({ trimSize: size }),
+
+  activeTheme: 'default',
+  setActiveTheme: (name: string) => set({ activeTheme: name }),
+}));

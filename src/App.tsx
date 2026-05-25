@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { parseMd } from '../engine/pipeline/index.ts';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
+import { useBookStore } from './store.ts';
 
 const DEBOUNCE_MS = 300;
 
@@ -14,58 +14,69 @@ const TRIM_SIZES = {
 type TrimSizeKey = keyof typeof TRIM_SIZES;
 
 export default function App() {
-  const [source, setSource] = useState(sampleMd);
-  const [html, setHtml] = useState('');
-  const [trimSize, setTrimSize] = useState<TrimSizeKey>('6x9');
+  // ── Store selectors ──────────────────────────────────────────────────────
+  const source = useBookStore((s) => s.source);
+  const html = useBookStore((s) => s.html);
+  const trimSize = useBookStore((s) => s.trimSize) as TrimSizeKey;
+  const setSource = useBookStore((s) => s.setSource);
+  const setTrimSize = useBookStore((s) => s.setTrimSize);
+
+  // ── Debounce timer ───────────────────────────────────────────────────────
+  // Debounce is a UI concern: we do not want parseMd firing on every keystroke.
+  // The store's setSource handles async parseMd + stale-response guarding;
+  // App.tsx is responsible for deciding *when* to call it.
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Generation counter: incremented on each debounced parseMd call so that a
-  // slow earlier response can never overwrite the result of a newer call.
-  const parseMdGeneration = useRef(0);
 
-  // Apply trim-size CSS custom properties to the document root whenever the
-  // selected trim size changes. useLayoutEffect fires synchronously before paint
-  // and before child useEffects observe the DOM, so PagedPreview's useEffect
-  // always reads the already-updated --book-trim-width / --book-trim-height.
-  useLayoutEffect(() => {
-    const { width, height } = TRIM_SIZES[trimSize];
-    document.documentElement.style.setProperty('--book-trim-width', width);
-    document.documentElement.style.setProperty('--book-trim-height', height);
-  }, [trimSize]);
-
-  // Parse on mount with the initial sample
+  // ── Initialise with sample manuscript ────────────────────────────────────
+  // Call setSource once on mount so the store runs parseMd on the initial text.
   useEffect(() => {
-    parseMd(sampleMd)
-      .then(({ html }) => setHtml(html))
-      .catch((err) => console.error('parseMd failed:', err));
-  }, []);
+    setSource(sampleMd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally run once; setSource is stable (Zustand action)
 
-  // Cleanup: cancel any pending debounce timer when the component unmounts.
+  // ── Cleanup pending debounce on unmount ───────────────────────────────────
   useEffect(() => {
     return () => {
       if (debounceTimer.current !== null) clearTimeout(debounceTimer.current);
     };
   }, []);
 
-  const handleSourceChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    setSource(text);
+  // ── Trim-size CSS custom properties ──────────────────────────────────────
+  // Apply --book-trim-width / --book-trim-height to the document root
+  // synchronously before paint. useLayoutEffect fires before child useEffects,
+  // so PagedPreview's useEffect always reads the already-updated values from
+  // getComputedStyle when trimSize changes.
+  useLayoutEffect(() => {
+    const { width, height } = TRIM_SIZES[trimSize] ?? TRIM_SIZES['6x9'];
+    document.documentElement.style.setProperty('--book-trim-width', width);
+    document.documentElement.style.setProperty('--book-trim-height', height);
+  }, [trimSize]);
 
-    // Debounce repagination: clear any pending timer and restart
-    if (debounceTimer.current !== null) {
-      clearTimeout(debounceTimer.current);
-    }
-    debounceTimer.current = setTimeout(() => {
-      debounceTimer.current = null;
-      // Capture the generation at the time this call was issued.
-      // If a newer call completes first, gen will be stale and we skip setHtml.
-      const gen = ++parseMdGeneration.current;
-      parseMd(text)
-        .then(({ html }) => {
-          if (gen === parseMdGeneration.current) setHtml(html);
-        })
-        .catch((err) => console.error('parseMd failed:', err));
-    }, DEBOUNCE_MS);
-  }, []);
+  // ── Textarea change handler ───────────────────────────────────────────────
+  const handleSourceChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const text = e.target.value;
+
+      // Debounce: reset the timer on every keystroke, calling store setSource
+      // (which triggers parseMd) only after the user pauses.
+      if (debounceTimer.current !== null) {
+        clearTimeout(debounceTimer.current);
+      }
+      debounceTimer.current = setTimeout(() => {
+        debounceTimer.current = null;
+        setSource(text);
+      }, DEBOUNCE_MS);
+
+      // Update the textarea value immediately via the store so it stays
+      // responsive — write source directly without waiting for the debounce.
+      // We bypass setSource here (which would kick off parseMd) and instead
+      // use the store's source field as a controlled value. Because Zustand
+      // store updates are synchronous, patching source inline keeps the cursor
+      // position stable while parseMd runs in the background after the debounce.
+      useBookStore.setState({ source: text });
+    },
+    [setSource]
+  );
 
   return (
     <div
