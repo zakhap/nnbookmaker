@@ -12,7 +12,8 @@
 
 import { create } from 'zustand';
 import { parseMd } from '../engine/pipeline/index.ts';
-import { DEFAULT_TRIM, TrimSizeKey } from './trimSizes.ts';
+import { DEFAULT_TRIM } from './trimSizes.ts';
+import type { TrimSizeKey } from './trimSizes.ts';
 
 // ─── Store shape ──────────────────────────────────────────────────────────────
 

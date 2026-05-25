@@ -7,7 +7,8 @@
  */
 
 import { useBookStore } from '../store.ts';
-import { TRIM_SIZE_LABELS, TRIM_SIZE_ORDER, TrimSizeKey } from '../trimSizes.ts';
+import { TRIM_SIZE_LABELS, TRIM_SIZE_ORDER } from '../trimSizes.ts';
+import type { TrimSizeKey } from '../trimSizes.ts';
 
 const SELECT_STYLE: React.CSSProperties = {
   fontSize: '12px',

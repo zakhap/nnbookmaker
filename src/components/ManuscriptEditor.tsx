@@ -169,7 +169,7 @@ const frontmatterPlugin = ViewPlugin.fromClass(
       this.decorations = buildFrontmatterDecorations(view);
     }
     update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged) {
+      if (update.docChanged) {
         this.decorations = buildFrontmatterDecorations(update.view);
       }
     }

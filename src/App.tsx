@@ -6,6 +6,7 @@ import TokenPanel from './components/TokenPanel.tsx';
 import TrimSizeSelector from './components/TrimSizeSelector.tsx';
 import { useBookStore } from './store.ts';
 import { CONCRETE_TRIM_SIZES, DEFAULT_TRIM } from './trimSizes.ts';
+import type { ConcreteTrimKey } from './trimSizes.ts';
 
 export default function App() {
   // ── Store selectors ──────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ export default function App() {
       // If out of range, leave existing tokens in place
       return;
     } else {
-      ({ width, height } = CONCRETE_TRIM_SIZES[trimSize] ?? CONCRETE_TRIM_SIZES[DEFAULT_TRIM]);
+      ({ width, height } = CONCRETE_TRIM_SIZES[trimSize as ConcreteTrimKey] ?? CONCRETE_TRIM_SIZES[DEFAULT_TRIM as ConcreteTrimKey]);
     }
     document.documentElement.style.setProperty('--book-trim-width', width);
     document.documentElement.style.setProperty('--book-trim-height', height);
