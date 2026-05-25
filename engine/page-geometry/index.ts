@@ -104,6 +104,11 @@ export function generatePageGeometry(root: Element): string {
 }
 
 /**
+ * @deprecated Not compatible with the srcdoc architecture — geometry must be
+ * inlined before the Paged.js polyfill script (Quirk Q2). Use
+ * generatePageGeometry() + buildSrcdoc() instead. Kept for potential
+ * server-side rendering use cases.
+ *
  * Inject (or replace) a <style id="page-geometry"> element in doc.head
  * with the @page rules derived from the page geometry tokens found on
  * doc.documentElement.

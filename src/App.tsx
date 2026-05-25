@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { parseMd } from '../engine/pipeline/index.ts';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
@@ -23,9 +23,10 @@ export default function App() {
   const parseMdGeneration = useRef(0);
 
   // Apply trim-size CSS custom properties to the document root whenever the
-  // selected trim size changes. PagedPreview reads these via getComputedStyle
-  // inside its own useEffect (which re-runs because trimSize is in its dep array).
-  useEffect(() => {
+  // selected trim size changes. useLayoutEffect fires synchronously before paint
+  // and before child useEffects observe the DOM, so PagedPreview's useEffect
+  // always reads the already-updated --book-trim-width / --book-trim-height.
+  useLayoutEffect(() => {
     const { width, height } = TRIM_SIZES[trimSize];
     document.documentElement.style.setProperty('--book-trim-width', width);
     document.documentElement.style.setProperty('--book-trim-height', height);

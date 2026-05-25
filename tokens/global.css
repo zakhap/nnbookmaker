@@ -37,9 +37,11 @@
       'Times New Roman', serif;
     --font-mono-family: 'Courier New', 'Lucida Console', monospace;
 
-    /* ── Trim size — default 6 × 9 in (standard US trade) ───────────────  */
-    --book-trim-width: 6in;
-    --book-trim-height: 9in;
+    /* ── Trim size — default 6 × 9 in (standard US trade) ───────────────
+       Values in mm to match TRIM_SIZES['6x9'] in App.tsx, eliminating the
+       transient unit mismatch on initial mount before useLayoutEffect fires. */
+    --book-trim-width: 152.4mm;
+    --book-trim-height: 228.6mm;
 
     /* ── Page margins ────────────────────────────────────────────────────
        Inside (spine) margin is wider to compensate for binding gutter.

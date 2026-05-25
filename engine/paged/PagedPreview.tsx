@@ -67,10 +67,12 @@ export interface PagedPreviewProps {
   /** The HTML string produced by parseMd() — book body content only. */
   html: string;
   /**
-   * Trim size key — changing this prop causes PagedPreview to re-run its
-   * useEffect and re-read CSS custom properties from the parent frame, which
-   * by then have already been updated by App.tsx via style.setProperty.
-   * This is the mechanism that drives live trim-size switching.
+   * Trim size key — used as a useEffect dependency sentinel to trigger
+   * re-render on trim change. Changing this prop causes PagedPreview to
+   * re-run its useEffect and re-read CSS custom properties from the parent
+   * frame, which by then have already been updated by App.tsx's
+   * useLayoutEffect via style.setProperty. This is the mechanism that drives
+   * live trim-size switching.
    */
   trimSize?: string;
 }
@@ -296,9 +298,9 @@ export function PagedPreview({ html, trimSize }: PagedPreviewProps) {
     // cleanly from scratch on each update.
     //
     // generatePageGeometry re-reads CSS custom properties from the parent frame
-    // on every call. When trimSize changes, App.tsx has already called
-    // style.setProperty on document.documentElement before this effect runs, so
-    // getComputedStyle picks up the new --book-trim-width / --book-trim-height.
+    // on every call. App.tsx uses useLayoutEffect to write CSS vars synchronously
+    // before this useEffect reads them, so getComputedStyle always picks up the
+    // new --book-trim-width / --book-trim-height when trimSize changes.
     // See Quirk Q1 / Q2 / Q5 in the file-level JSDoc for why this full-replace
     // strategy is required instead of patching the existing @page rule.
     const pageGeomCSS = generatePageGeometry(document.documentElement);
