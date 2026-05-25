@@ -47,6 +47,9 @@ function readVisiblePageIndex(iframe: HTMLIFrameElement): number {
     // That is the page that is "in view" at the top of the viewport.
     let idx = 0;
     for (let i = 0; i < pages.length; i++) {
+      // +1 sub-pixel tolerance: offsetTop uses integer pixels but scrollY can
+      // be fractional on high-DPI screens; the small bias avoids flipping to
+      // the previous page when the viewport is aligned exactly to a page edge.
       if (pages[i].offsetTop <= scrollY + 1) {
         idx = i;
       }
@@ -155,8 +158,11 @@ ${html}
         if (window.PagedPolyfill && typeof window.PagedPolyfill.on === 'function') {
           window.PagedPolyfill.on('rendered', notifyRendered);
         } else {
-          // Fallback: if the Paged.js hook API is unavailable, fire after a
-          // short delay to allow pagination to finish.
+          // Fallback: if the Paged.js hook API is unavailable, fire after 800 ms
+          // to allow pagination to finish. 800 ms is a rough heuristic that
+          // works for typical short manuscripts (~50 pages); very long documents
+          // may still be paginating when this fires, causing a scroll position
+          // that doesn't line up with the correct page.
           setTimeout(notifyRendered, 800);
         }
       });
@@ -195,6 +201,9 @@ export function PagedPreview({ html }: PagedPreviewProps) {
   // Listen for the pagedjs:rendered postMessage from the iframe.
   // When it arrives, scroll the iframe back to the saved page index.
   const handleMessage = useCallback((event: MessageEvent) => {
+    // Ignore messages that did not originate from our iframe's content window
+    // to guard against third-party postMessage spoofing.
+    if (event.source !== iframeRef.current?.contentWindow) return;
     if (
       event.data &&
       typeof event.data === 'object' &&

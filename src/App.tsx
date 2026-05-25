@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseMd } from '../engine/pipeline/index.ts';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
@@ -9,6 +9,9 @@ export default function App() {
   const [source, setSource] = useState(sampleMd);
   const [html, setHtml] = useState('');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Generation counter: incremented on each debounced parseMd call so that a
+  // slow earlier response can never overwrite the result of a newer call.
+  const parseMdGeneration = useRef(0);
 
   // Parse on mount with the initial sample
   useEffect(() => {
@@ -17,7 +20,14 @@ export default function App() {
       .catch((err) => console.error('parseMd failed:', err));
   }, []);
 
-  function handleSourceChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+  // Cleanup: cancel any pending debounce timer when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current !== null) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
+  const handleSourceChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     setSource(text);
 
@@ -27,11 +37,16 @@ export default function App() {
     }
     debounceTimer.current = setTimeout(() => {
       debounceTimer.current = null;
+      // Capture the generation at the time this call was issued.
+      // If a newer call completes first, gen will be stale and we skip setHtml.
+      const gen = ++parseMdGeneration.current;
       parseMd(text)
-        .then(({ html }) => setHtml(html))
+        .then(({ html }) => {
+          if (gen === parseMdGeneration.current) setHtml(html);
+        })
         .catch((err) => console.error('parseMd failed:', err));
     }, DEBOUNCE_MS);
-  }
+  }, []);
 
   return (
     <div
