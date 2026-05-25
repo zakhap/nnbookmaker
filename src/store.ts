@@ -12,6 +12,7 @@
 
 import { create } from 'zustand';
 import { parseMd } from '../engine/pipeline/index.ts';
+import { DEFAULT_TRIM, TrimSizeKey } from './trimSizes.ts';
 
 // ─── Store shape ──────────────────────────────────────────────────────────────
 
@@ -29,8 +30,6 @@ export interface BookStore {
    * A generation counter prevents stale results from overwriting newer ones.
    */
   setSource: (src: string) => void;
-  /** Directly set the rendered HTML (exposed for testing / external callers). */
-  setHtml: (html: string) => void;
 
   // ── Token overrides ───────────────────────────────────────────────────────
   /**
@@ -51,8 +50,8 @@ export interface BookStore {
 
   // ── Project config ────────────────────────────────────────────────────────
   /** Trim size key, e.g. '6x9' or '5x8'. */
-  trimSize: string;
-  setTrimSize: (size: string) => void;
+  trimSize: TrimSizeKey;
+  setTrimSize: (size: TrimSizeKey) => void;
   /** Active theme name, e.g. 'default'. */
   activeTheme: string;
   setActiveTheme: (name: string) => void;
@@ -62,6 +61,9 @@ export interface BookStore {
 // Lives outside the store so it does not cause unnecessary re-renders.
 // Incremented each time setSource fires parseMd; the resolved callback
 // checks that its captured gen still matches before writing to the store.
+//
+// Module-level singleton counter — safe because create() is called once per
+// module evaluation. Tests that reset modules must also reset this counter.
 let _parseMdGeneration = 0;
 
 // ─── Store factory ────────────────────────────────────────────────────────────
@@ -91,8 +93,6 @@ export const useBookStore = create<BookStore>((set) => ({
       });
   },
 
-  setHtml: (html: string) => set({ html }),
-
   // ── Token overrides ────────────────────────────────────────────────────────
   tokenOverrides: {},
 
@@ -108,8 +108,8 @@ export const useBookStore = create<BookStore>((set) => ({
   setCustomCss: (css: string) => set({ customCss: css }),
 
   // ── Project config ─────────────────────────────────────────────────────────
-  trimSize: '6x9',
-  setTrimSize: (size: string) => set({ trimSize: size }),
+  trimSize: DEFAULT_TRIM,
+  setTrimSize: (size: TrimSizeKey) => set({ trimSize: size }),
 
   activeTheme: 'default',
   setActiveTheme: (name: string) => set({ activeTheme: name }),

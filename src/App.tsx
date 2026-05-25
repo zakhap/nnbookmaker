@@ -2,22 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import PagedPreview from '../engine/paged/PagedPreview.tsx';
 import sampleMd from '../manuscripts/sample.md?raw';
 import { useBookStore } from './store.ts';
+import { DEFAULT_TRIM, TRIM_SIZES, TrimSizeKey } from './trimSizes.ts';
 
 const DEBOUNCE_MS = 300;
-
-/** Supported trim size keys and their CSS custom property values. */
-const TRIM_SIZES = {
-  '5x8': { width: '127mm', height: '203.2mm', label: '5 × 8 in' },
-  '6x9': { width: '152.4mm', height: '228.6mm', label: '6 × 9 in' },
-} as const;
-
-type TrimSizeKey = keyof typeof TRIM_SIZES;
 
 export default function App() {
   // ── Store selectors ──────────────────────────────────────────────────────
   const source = useBookStore((s) => s.source);
   const html = useBookStore((s) => s.html);
-  const trimSize = useBookStore((s) => s.trimSize) as TrimSizeKey;
+  const trimSize = useBookStore((s) => s.trimSize);
   const setSource = useBookStore((s) => s.setSource);
   const setTrimSize = useBookStore((s) => s.setTrimSize);
 
@@ -47,7 +40,7 @@ export default function App() {
   // so PagedPreview's useEffect always reads the already-updated values from
   // getComputedStyle when trimSize changes.
   useLayoutEffect(() => {
-    const { width, height } = TRIM_SIZES[trimSize] ?? TRIM_SIZES['6x9'];
+    const { width, height } = TRIM_SIZES[trimSize] ?? TRIM_SIZES[DEFAULT_TRIM];
     document.documentElement.style.setProperty('--book-trim-width', width);
     document.documentElement.style.setProperty('--book-trim-height', height);
   }, [trimSize]);
@@ -67,12 +60,10 @@ export default function App() {
         setSource(text);
       }, DEBOUNCE_MS);
 
-      // Update the textarea value immediately via the store so it stays
-      // responsive — write source directly without waiting for the debounce.
-      // We bypass setSource here (which would kick off parseMd) and instead
-      // use the store's source field as a controlled value. Because Zustand
-      // store updates are synchronous, patching source inline keeps the cursor
-      // position stable while parseMd runs in the background after the debounce.
+      // Write source immediately so the textarea stays responsive.
+      // setSource (called after the debounce) will also write source before
+      // running parseMd — this double-write is harmless; the second write is
+      // identical and the generation counter guards the parseMd result.
       useBookStore.setState({ source: text });
     },
     [setSource]
