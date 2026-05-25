@@ -321,25 +321,51 @@
 
   /* ── Footnotes ──────────────────────────────────────────────────────────── */
 
-  /* Paged.js places footnotes into a margin box; we style the content here.
-     The .footnote class marks a footnote call in the text.               */
+  /*
+   * MVP FOOTNOTE STRATEGY — GFM endnotes (Phase 2) vs true page-foot (Phase 3)
+   * ─────────────────────────────────────────────────────────────────────────────
+   * Phase 2 (current): remark-gfm renders [^1] as a <section class="footnotes">
+   * at the end of the document. The pipeline is purely HTML-in, HTML-out: no
+   * structural information is lost, footnote IDs (fn-1, fnref-1) are preserved,
+   * and back-references work via anchor links. This is "endnotes" semantically,
+   * but is a correct lossless representation of the author's intent.
+   *
+   * Phase 3 (deferred §D-09): True bottom-of-page placement requires one of:
+   *   a) CSS Paged Media `float: footnote` — supported by Paged.js when applied
+   *      to a .footnote element *inline* in the text at the call site (not the
+   *      endnote section). This needs a rehype transform that moves each footnote
+   *      body back to its call site as a `.footnote` span with `float: footnote`.
+   *      The `.footnote { float: footnote; }` rule below is a placeholder for
+   *      that future transform; Paged.js will pick it up automatically.
+   *   b) A custom Paged.js handler (Chunker/Layout hook) that intercepts GFM
+   *      footnote elements and relocates them during pagination.
+   *
+   * Nothing in the current pipeline forecloses Phase 3: the GFM IDs and the
+   * section structure are stable anchors for a future rehype transform.
+   * The @footnote margin-box rule (injected by PagedPreview.tsx, bypassing Vite)
+   * is already wired for when `float: footnote` activates.
+   */
 
+  /* .footnote: placeholder for Phase 3 CSS Paged Media true-footnote placement.
+     A future rehype plugin will emit inline <span class="footnote"> elements at
+     the call site; Paged.js will then float them to the page foot automatically.
+     The rule has no visible effect in Phase 2 (GFM endnotes don't use this class). */
   .footnote {
-    /* Paged.js will move this element to the page foot; hide it inline */
     float: footnote;
     font-size: var(--footnote-size);
     line-height: var(--footnote-leading);
     color: var(--color-footnote);
   }
 
-  /* Footnote area rule (Paged.js / CSS Paged Media):
-     @page { @footnote { border-top: 1px solid var(--color-rule);
-       padding-top: calc(var(--rhythm-footnote-gap) * var(--book-baseline)); } }
-     Kept as a comment because LightningCSS (Vite build-time minifier) does not
-     recognise @footnote. This rule is injected verbatim by PagedPreview.tsx into
-     the iframe's inline stylesheet, bypassing the Vite CSS pipeline. */
+  /* @footnote margin-box rule — see PagedPreview.tsx `pagedMediaExtras`.
+     LightningCSS (Vite build-time CSS transformer) does not recognise @footnote,
+     so this rule cannot live in any .css file in the Vite pipeline. It is injected
+     verbatim into the iframe's inline <style> block to bypass the transformer:
+       @page { @footnote { border-top: 1px solid var(--color-rule);
+         padding-top: calc(var(--rhythm-footnote-gap) * var(--book-baseline)); } } */
 
-  /* Fallback: when Paged.js is not present, render footnotes as a numbered list */
+  /* Phase 2 endnote section — remark-gfm emits <section class="footnotes">.
+     Styled as a traditional endnote list: reduced size, rule above, numbered. */
   .footnotes {
     margin-top: calc(2 * var(--book-baseline));
     border-top: 1px solid var(--color-rule);
@@ -361,6 +387,29 @@
   .footnotes li p {
     text-indent: 0;
     margin: 0;
+  }
+
+  /* Back-reference arrow (↩) — suppress from print, reduce visual noise on screen */
+  .data-footnote-backref {
+    text-decoration: none;
+    margin-left: 0.25em;
+    font-size: var(--caption-size);
+    color: var(--color-caption);
+  }
+
+  /* remark-gfm injects an sr-only <h2 id="footnote-label">Footnotes</h2> as an
+     accessibility label for the section. Hide it visually but keep it in the
+     accessibility tree (screen readers still announce "Footnotes" for the list). */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   /* ── Lists ──────────────────────────────────────────────────────────────── */

@@ -73,9 +73,32 @@ assert(
 );
 
 // 6. Footnotes rendered
+// remark-gfm produces:
+//   inline: <sup><a href="#user-content-fn-1" id="user-content-fnref-1"
+//              data-footnote-ref ...>1</a></sup>
+//   endnotes: <section data-footnotes class="footnotes">
+//               <h2 class="sr-only" id="footnote-label">Footnotes</h2>
+//               <ol><li id="user-content-fn-1">…</li></ol>
+//             </section>
 assert(
-  'Footnote references rendered (fn-1 or footnote-label)',
-  html.includes('fn') || html.includes('footnote')
+  'Footnote call site: data-footnote-ref attribute present',
+  html.includes('data-footnote-ref')
+);
+assert(
+  'Footnote endnote section: <section class="footnotes"> present',
+  html.includes('class="footnotes"')
+);
+assert(
+  'Footnote endnote section: sr-only heading for accessibility',
+  html.includes('class="sr-only"') && html.includes('id="footnote-label"')
+);
+assert(
+  'Footnote endnote list item: user-content-fn-1 anchor',
+  html.includes('id="user-content-fn-1"')
+);
+assert(
+  'Footnote back-reference: data-footnote-backref link present',
+  html.includes('data-footnote-backref')
 );
 
 // 7. Table rendered
