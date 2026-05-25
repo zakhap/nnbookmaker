@@ -3,7 +3,7 @@
  *
  * Converts a Markdown string (Pandoc-flavored) to HTML using:
  *   remark-parse → remark-frontmatter → remark-gfm → remark-directive
- *   → remark-rehype → rehype-stringify
+ *   → remark-math → remark-rehype → rehype-stringify
  *
  * Phase 0 stub — implementation coming in Task 2.
  */
