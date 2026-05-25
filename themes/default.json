@@ -1,0 +1,44 @@
+{
+  "$schema": "../themes/schema.json",
+  "name": "Default",
+  "description": "Standard US trade book: 6 × 9 in, 11pt Georgia, 14pt leading, 4.5in measure. The zero-state every new manuscript opens with.",
+  "version": "1",
+
+  "tokens": {
+    "primitives": {
+      "--pt-base": "11",
+      "--leading-ratio": "1.272727",
+      "--scale-ratio": "1.333",
+      "--indent-ratio": "2",
+      "--heading-tracking": "-0.01em",
+      "--smallcaps-tracking": "0.06em",
+      "--rhythm-chapter-before": "6",
+      "--rhythm-chapter-after": "3",
+      "--rhythm-h2-before": "3",
+      "--rhythm-h2-after": "1",
+      "--rhythm-h3-before": "2",
+      "--rhythm-h3-after": "0",
+      "--rhythm-h4-before": "2",
+      "--rhythm-h5-before": "1",
+      "--rhythm-h6-before": "1",
+      "--rhythm-block-before": "1",
+      "--rhythm-block-after": "1",
+      "--rhythm-footnote-gap": "1"
+    },
+    "global": {
+      "--book-trim-width": "152.4mm",
+      "--book-trim-height": "228.6mm",
+      "--book-margin-top": "0.75in",
+      "--book-margin-bottom": "0.875in",
+      "--book-margin-inside": "0.875in",
+      "--book-margin-outside": "0.625in",
+      "--book-color-ink": "#1a1a18",
+      "--book-color-paper": "#fffff8",
+      "--book-color-rule": "#c8c4bc",
+      "--book-color-accent": "#5a4632",
+      "--font-base-family": "Georgia, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif",
+      "--font-heading-family": "Georgia, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif",
+      "--font-mono-family": "'Courier New', 'Lucida Console', monospace"
+    }
+  }
+}

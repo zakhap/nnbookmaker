@@ -299,12 +299,12 @@
 
   code {
     font-family: var(--font-mono);
-    font-size: calc(var(--font-base-size) * 0.864); /* ≈ 9.5pt — mono at body size looks large */
+    font-size: var(--text-code-size); /* ≈ 9.5pt — mono at body size looks large */
   }
 
   pre {
     font-family: var(--font-mono);
-    font-size: calc(var(--font-base-size) * 0.864);
+    font-size: var(--text-code-size);
     line-height: var(--text-body-leading); /* keep on grid */
     margin-top: var(--block-margin-before);
     margin-bottom: var(--block-margin-after);

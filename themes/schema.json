@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "nnbookmaker theme",
+  "description": "A named set of token overrides for nnbookmaker. Primitive and global layer tokens only; semantic and component tokens are derived automatically.",
+  "type": "object",
+  "required": ["name", "tokens"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "description": "Human-readable theme name shown in the theme picker."
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line description of the theme."
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version. Always '1' for now.",
+      "enum": ["1"]
+    },
+    "tokens": {
+      "type": "object",
+      "description": "Token overrides grouped by layer.",
+      "additionalProperties": false,
+      "properties": {
+        "primitives": {
+          "type": "object",
+          "description": "Primitive layer token overrides (unitless ratios and multipliers).",
+          "additionalProperties": {
+            "type": "string",
+            "description": "CSS custom property value string."
+          }
+        },
+        "global": {
+          "type": "object",
+          "description": "Global layer token overrides (physical measurements, colours, font families).",
+          "additionalProperties": {
+            "type": "string",
+            "description": "CSS custom property value string."
+          }
+        }
+      }
+    }
+  }
+}

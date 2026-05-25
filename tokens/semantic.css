@@ -102,6 +102,9 @@
     --caption-size: calc(var(--font-base-size) * 0.864); /* ≈ 9.5pt */
     --caption-leading: calc(1 * var(--book-baseline));
 
+    /* Code / monospace: same optical size as caption — mono runs wider at body size */
+    --text-code-size: calc(var(--font-base-size) * 0.864); /* ≈ 9.5pt */
+
     /* Footnote: smaller still — clear step below caption */
     --footnote-size: calc(var(--font-base-size) * 0.818); /* ≈ 9pt */
     --footnote-leading: calc(1 * var(--book-baseline));
