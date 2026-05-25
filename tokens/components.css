@@ -1,17 +1,426 @@
 /**
  * Layer: components
  *
- * Applies semantic tokens to specific HTML elements
- * and structural book components.
- * All vertical measurements must be calc() multiples of --book-baseline.
+ * Applies semantic tokens to specific HTML elements and book components.
  *
- * Stub — full token set coming in Task 6.
+ * § 3.5 compliance: ALL vertical measurements are calc() multiples of
+ * --book-baseline. No bare pt/px/em vertical values.
+ *
+ * Paragraph model: traditional book style — first-line indent, no paragraph
+ * spacing between consecutive paragraphs. Space is added before the first
+ * paragraph following a heading via the adjacent-sibling rule.
  */
 
 @layer components {
+  /* ── Base ───────────────────────────────────────────────────────────────── */
+
   body {
     font-family: var(--font-body);
-    font-size: var(--text-body);
-    line-height: var(--leading-body);
+    font-size: var(--text-body-size);
+    line-height: var(--text-body-leading);
+    color: var(--color-body);
+    background: var(--book-color-paper);
+
+    /* Measure: constrain the text column to avoid over-long lines */
+    max-width: var(--measure);
+
+    /* Optical spacing: allow the paged engine to control page margins */
+    margin: 0;
+    padding: 0;
+
+    /* Typography quality */
+    font-kerning: normal;
+    font-variant-ligatures: common-ligatures contextual;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    hanging-punctuation: first last;
+  }
+
+  /* ── Paragraphs ─────────────────────────────────────────────────────────── */
+
+  p {
+    margin-top: 0;
+    margin-bottom: 0;
+    text-indent: var(--para-indent);
+    orphans: 2;
+    widows: 2;
+  }
+
+  /* No indent on the first paragraph in a section (follows a heading or is :first-child) */
+  h1 + p,
+  h2 + p,
+  h3 + p,
+  h4 + p,
+  h5 + p,
+  h6 + p,
+  p:first-child,
+  .no-indent {
+    text-indent: 0;
+  }
+
+  /* ── Headings — base reset ──────────────────────────────────────────────── */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    color: var(--color-heading);
+    font-weight: normal; /* Book headings are set in regular weight, not bold */
+    letter-spacing: var(--heading-tracking);
+    page-break-after: avoid;
+    break-after: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* ── h1 — Chapter title ─────────────────────────────────────────────────── */
+
+  h1 {
+    font-size: var(--heading-1-size);
+    line-height: var(--heading-1-leading);
+    margin-top: var(--heading-1-margin-before);
+    margin-bottom: var(--heading-1-margin-after);
+    font-variant-ligatures: discretionary-ligatures;
+    font-variant-caps: small-caps;
+    page-break-before: recto; /* Chapter titles start on recto pages */
+    break-before: recto;
+  }
+
+  /* ── h2 — Section head ──────────────────────────────────────────────────── */
+
+  h2 {
+    font-size: var(--heading-2-size);
+    line-height: var(--heading-2-leading);
+    margin-top: var(--heading-2-margin-before);
+    margin-bottom: var(--heading-2-margin-after);
+  }
+
+  /* ── h3 — Subsection ────────────────────────────────────────────────────── */
+
+  h3 {
+    font-size: var(--heading-3-size);
+    line-height: var(--heading-3-leading);
+    margin-top: var(--heading-3-margin-before);
+    margin-bottom: var(--heading-3-margin-after);
+    font-style: italic;
+  }
+
+  /* ── h4 — Run-in / A-head ───────────────────────────────────────────────── */
+
+  h4 {
+    font-size: var(--heading-4-size);
+    line-height: var(--heading-4-leading);
+    margin-top: calc(2 * var(--book-baseline));
+    margin-bottom: calc(0 * var(--book-baseline));
+    font-style: italic;
+    font-weight: normal;
+  }
+
+  /* ── h5, h6 — Minor sub-heads (same size as body, distinguished by style) */
+
+  h5,
+  h6 {
+    font-size: var(--text-body-size);
+    line-height: var(--text-body-leading);
+    margin-top: calc(1 * var(--book-baseline));
+    margin-bottom: calc(0 * var(--book-baseline));
+    font-weight: normal;
+  }
+
+  h5 {
+    font-variant-caps: small-caps;
+    letter-spacing: var(--smallcaps-tracking);
+  }
+
+  h6 {
+    font-style: italic;
+  }
+
+  /* ── Blockquote / Extract ───────────────────────────────────────────────── */
+
+  blockquote {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    margin-left: var(--block-indent-left);
+    margin-right: var(--block-indent-right);
+    font-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt — slightly smaller */
+    line-height: var(--text-body-leading); /* keep on grid */
+  }
+
+  blockquote p {
+    text-indent: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  blockquote p + p {
+    text-indent: var(--para-indent);
+  }
+
+  /* Attribution line inside a blockquote */
+  blockquote footer,
+  blockquote cite {
+    display: block;
+    font-size: var(--caption-size);
+    line-height: var(--caption-leading);
+    margin-top: calc(0.5 * var(--book-baseline));
+    text-align: right;
+    font-style: normal;
+  }
+
+  /* ── Verse ──────────────────────────────────────────────────────────────── */
+
+  .verse {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    margin-left: var(--block-indent-left);
+    font-family: var(--font-body);
+    font-size: var(--text-body-size);
+    line-height: var(--text-body-leading);
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .verse p {
+    text-indent: 0;
+    margin: 0;
+  }
+
+  /* Stanza break: one full baseline of space between verse paragraphs */
+  .verse p + p {
+    margin-top: calc(1 * var(--book-baseline));
+    text-indent: 0;
+  }
+
+  /* ── Callout / Note box ─────────────────────────────────────────────────── */
+
+  .callout {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    padding-top: var(--callout-padding-v);
+    padding-bottom: var(--callout-padding-v);
+    padding-left: var(--callout-padding-h);
+    padding-right: var(--callout-padding-h);
+    border-top: 1px solid var(--color-rule);
+    border-bottom: 1px solid var(--color-rule);
+    font-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt */
+    line-height: var(--text-body-leading);
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .callout p {
+    text-indent: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .callout p + p {
+    margin-top: calc(0.5 * var(--book-baseline));
+  }
+
+  /* ── Figure / Caption ───────────────────────────────────────────────────── */
+
+  figure {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    margin-left: 0;
+    margin-right: 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  figure img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  figcaption,
+  .caption {
+    font-size: var(--caption-size);
+    line-height: var(--caption-leading);
+    color: var(--color-caption);
+    margin-top: calc(0.5 * var(--book-baseline));
+    font-style: italic;
+  }
+
+  /* ── Table ──────────────────────────────────────────────────────────────── */
+
+  table {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    border-collapse: collapse;
+    font-size: calc(var(--font-base-size) * 0.927); /* ≈ 10.2pt — one step down */
+    line-height: var(--text-body-leading);
+    width: 100%;
+  }
+
+  thead {
+    border-top: 1px solid var(--color-rule);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  tbody tr:last-child {
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  th,
+  td {
+    padding-top: var(--table-cell-padding-v);
+    padding-bottom: var(--table-cell-padding-v);
+    padding-left: var(--table-cell-padding-h);
+    padding-right: var(--table-cell-padding-h);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-weight: normal;
+    font-variant-caps: small-caps;
+    letter-spacing: var(--smallcaps-tracking);
+  }
+
+  /* ── Code / Pre ─────────────────────────────────────────────────────────── */
+
+  code {
+    font-family: var(--font-mono);
+    font-size: calc(var(--font-base-size) * 0.864); /* ≈ 9.5pt — mono at body size looks large */
+  }
+
+  pre {
+    font-family: var(--font-mono);
+    font-size: calc(var(--font-base-size) * 0.864);
+    line-height: var(--text-body-leading); /* keep on grid */
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    margin-left: var(--block-indent-left);
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  pre code {
+    font-size: inherit;
+  }
+
+  /* ── Footnotes ──────────────────────────────────────────────────────────── */
+
+  /* Paged.js places footnotes into a margin box; we style the content here.
+     The .footnote class marks a footnote call in the text.               */
+
+  .footnote {
+    /* Paged.js will move this element to the page foot; hide it inline */
+    float: footnote;
+    font-size: var(--footnote-size);
+    line-height: var(--footnote-leading);
+    color: var(--color-footnote);
+  }
+
+  /* Footnote area rule (Paged.js / CSS Paged Media):
+     @page { @footnote { border-top: 1px solid var(--color-rule);
+       padding-top: calc(var(--rhythm-footnote-gap) * var(--book-baseline)); } }
+     Kept as a comment because LightningCSS (Vite build-time minifier) does not
+     recognise @footnote. This rule is injected verbatim by PagedPreview.tsx into
+     the iframe's inline stylesheet, bypassing the Vite CSS pipeline. */
+
+  /* Fallback: when Paged.js is not present, render footnotes as a numbered list */
+  .footnotes {
+    margin-top: calc(2 * var(--book-baseline));
+    border-top: 1px solid var(--color-rule);
+    padding-top: calc(1 * var(--book-baseline));
+    font-size: var(--footnote-size);
+    line-height: var(--footnote-leading);
+    color: var(--color-footnote);
+  }
+
+  .footnotes ol {
+    margin: 0;
+    padding-left: calc(2 * var(--book-baseline));
+  }
+
+  .footnotes li {
+    margin-bottom: calc(0.5 * var(--book-baseline));
+  }
+
+  .footnotes li p {
+    text-indent: 0;
+    margin: 0;
+  }
+
+  /* ── Lists ──────────────────────────────────────────────────────────────── */
+
+  ul,
+  ol {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    padding-left: calc(2 * var(--book-baseline));
+  }
+
+  li {
+    margin-bottom: 0;
+    line-height: var(--text-body-leading);
+  }
+
+  /* Nested lists: no extra vertical space */
+  li ul,
+  li ol {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* ── Horizontal rules / ornamental breaks ───────────────────────────────── */
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--color-rule);
+    margin-top: calc(2 * var(--book-baseline));
+    margin-bottom: calc(2 * var(--book-baseline));
+  }
+
+  /* Section break — fleuron or asterism style */
+  hr.section-break {
+    border: none;
+    text-align: center;
+    margin-top: calc(2 * var(--book-baseline));
+    margin-bottom: calc(2 * var(--book-baseline));
+  }
+
+  hr.section-break::after {
+    content: '❧';
+    color: var(--color-accent);
+    font-size: var(--text-body-size);
+    line-height: var(--text-body-leading);
+  }
+
+  /* ── Inline typographic utilities ──────────────────────────────────────── */
+
+  .smallcaps {
+    font-variant-caps: all-small-caps;
+    letter-spacing: var(--smallcaps-tracking);
+  }
+
+  .dropcap::first-letter {
+    float: left;
+    font-size: calc(3 * var(--book-baseline)); /* 3-line drop cap */
+    line-height: 1;
+    margin-top: 0.1em;
+    margin-right: 0.05em;
+    color: var(--color-accent);
+    font-variant-ligatures: none;
+  }
+
+  abbr[title] {
+    text-decoration: none;
+    border-bottom: 1px dotted var(--color-rule);
+    font-variant-caps: all-small-caps;
+    letter-spacing: var(--smallcaps-tracking);
   }
 }

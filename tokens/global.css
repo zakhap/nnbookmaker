@@ -2,24 +2,71 @@
  * Layer: global
  *
  * Maps primitives to named book measurements.
- * Trim size, page margins, measure (line length).
+ * Trim size, page margins, measure (line length), baseline unit, font base.
  *
- * Stub — full token set coming in Task 6.
+ * All vertical measurements are calc() multiples of --book-baseline.
+ * Horizontal measurements use physical units (in, mm, pt, pc) or ch/em.
+ *
+ * § 3.5 compliance: --book-baseline is derived from primitives; every
+ * vertical token in this layer is calc(N * var(--book-baseline)).
  */
 
 @layer global {
   :root {
-    /* Default trim: 6×9 in */
+    /* ── Baseline grid unit ──────────────────────────────────────────────
+       --book-baseline = pt-base × leading-ratio × 1pt
+       = 11 × 1.272727 × 1pt = 14pt exactly.
+       Every vertical distance must be calc(N * var(--book-baseline)).    */
+    --book-baseline: calc(var(--pt-base) * var(--leading-ratio) * 1pt);
+
+    /* ── Font base ───────────────────────────────────────────────────────
+       Body text size in real CSS length units.                           */
+    --font-base-size: calc(var(--pt-base) * 1pt);
+
+    /* Type scale ratio (re-exported so semantic layer doesn't reach back) */
+    --type-scale-ratio: var(--scale-ratio);
+
+    /* ── Font families ───────────────────────────────────────────────────
+       Georgia is universally available and has excellent screen/print
+       rendering. Palatino Linotype (Windows) and Book Antiqua are
+       the next-best system fallbacks. Garamond (macOS) rounds the stack.
+       For production, replace with a proper @font-face declaration.     */
+    --font-base-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Garamond,
+      'Times New Roman', serif;
+    --font-heading-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Garamond,
+      'Times New Roman', serif;
+    --font-mono-family: 'Courier New', 'Lucida Console', monospace;
+
+    /* ── Trim size — default 6 × 9 in (standard US trade) ───────────────  */
     --book-trim-width: 6in;
     --book-trim-height: 9in;
 
-    /* Page margins */
+    /* ── Page margins ────────────────────────────────────────────────────
+       Inside (spine) margin is wider to compensate for binding gutter.
+       Outside margin is narrower. Top ≈ 0.75in, bottom ≈ 0.875in gives
+       the classic bottom-heavy optical margin with running heads above. */
     --book-margin-top: 0.75in;
     --book-margin-bottom: 0.875in;
     --book-margin-inside: 0.875in;
     --book-margin-outside: 0.625in;
 
-    /* Baseline grid */
-    --book-baseline: calc(var(--baseline-pt) * 1pt);
+    /* ── Text measure (line length) ──────────────────────────────────────
+       6in - 0.875in (inside) - 0.625in (outside) = 4.5in = 27 picas.
+       27pc at 11pt/14pt is ≈ 66–70 characters per line — near the ideal
+       range (60–75 cpl) for continuous prose.                           */
+    --book-measure: 4.5in;
+
+    /* ── Paragraph model ─────────────────────────────────────────────────
+       Traditional book style: first-line indent, no paragraph spacing.
+       Indent = pt-base × indent-ratio × 1pt = 11 × 2 × 1pt = 22pt ≈ 2em */
+    --book-para-indent: calc(var(--pt-base) * var(--indent-ratio) * 1pt);
+
+    /* ── Colour ──────────────────────────────────────────────────────────
+       Near-black ink on white. Slightly warm off-black avoids the jarring
+       contrast of #000 on #fff; real presses land closer to this anyway. */
+    --book-color-ink: #1a1a18;
+    --book-color-paper: #fffff8;
+    --book-color-rule: #c8c4bc;
+    --book-color-accent: #5a4632; /* Used for ornamental rules, drop caps */
   }
 }

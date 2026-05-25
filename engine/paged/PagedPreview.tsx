@@ -115,6 +115,19 @@ function buildSrcdoc(html: string, pageGeomCSS: string): string {
     overridesCss,
   ].join('\n\n');
 
+  // @footnote is a CSS Paged Media rule not understood by LightningCSS (the
+  // Vite build-time CSS minifier), so it cannot live in components.css directly.
+  // It is injected here into the iframe only, bypassing the Vite pipeline.
+  const pagedMediaExtras = `
+@layer components {
+  @page {
+    @footnote {
+      border-top: 1px solid var(--color-rule);
+      padding-top: calc(var(--rhythm-footnote-gap) * var(--book-baseline));
+    }
+  }
+}`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -122,6 +135,7 @@ function buildSrcdoc(html: string, pageGeomCSS: string): string {
   <title>Book Preview</title>
   <style>
 ${inlineStyles}
+${pagedMediaExtras}
   </style>
   <style id="page-geometry">
 ${pageGeomCSS}

@@ -5,18 +5,63 @@
  * Nothing in this layer references another custom property.
  * Referenced by global, semantic, and component layers.
  *
- * Stub — full token set coming in Task 6.
+ * Design decisions:
+ *   pt-base       11    Classic trade book body size (10–12pt range)
+ *   leading-ratio 1.272727 → 14/11: gives a 14pt baseline grid
+ *   scale-ratio   1.333 (Perfect Fourth) — tighter than Major Third for book
+ *                 headings; H1 at 4 steps = 11 × 1.333^4 ≈ 26pt, H2 ≈ 19.5pt
+ *   indent-ratio  2.0   First-line indent = 2 × body size = 22pt ≈ 2em
  */
 
 @layer primitives {
   :root {
-    /* Type scale ratio (Major Third = 1.25) */
-    --scale-ratio: 1.25;
+    /* ── Type scale ─────────────────────────────────────────────────────── */
 
-    /* Base font size in pt (print unit) */
+    /* Base font size (points, unitless for calc use) */
     --pt-base: 11;
 
-    /* Baseline grid unit — every vertical measure is a multiple of this */
-    --baseline-pt: 14;
+    /* Leading ratio: leading ÷ body size = 14pt ÷ 11pt */
+    --leading-ratio: 1.272727;
+
+    /* Type scale ratio — Perfect Fourth (1.333) */
+    --scale-ratio: 1.333;
+
+    /* ── Paragraph geometry ─────────────────────────────────────────────── */
+
+    /* First-line indent as a multiplier of pt-base (22pt ≈ 2 ems) */
+    --indent-ratio: 2;
+
+    /* ── Optical corrections ────────────────────────────────────────────── */
+
+    /* Heading tracking (letter-spacing) in em — slight open at display sizes */
+    --heading-tracking: -0.01em;
+
+    /* Small-caps letter-spacing */
+    --smallcaps-tracking: 0.06em;
+
+    /* ── Vertical rhythm multipliers ────────────────────────────────────── */
+    /* All vertical spacing is N × --book-baseline.
+       These store the N so that semantic.css can expose named rhythm tokens. */
+
+    /* Space before a chapter-opening element (h1): 6 baselines */
+    --rhythm-chapter-before: 6;
+
+    /* Space after h1: 3 baselines */
+    --rhythm-chapter-after: 3;
+
+    /* Space before h2: 3 baselines; after h2: 1 baseline */
+    --rhythm-h2-before: 3;
+    --rhythm-h2-after: 1;
+
+    /* Space before h3: 2 baselines; after h3: 0 (margin collapses into body) */
+    --rhythm-h3-before: 2;
+    --rhythm-h3-after: 0;
+
+    /* Space above/below block elements (blockquote, verse, callout, table) */
+    --rhythm-block-before: 1;
+    --rhythm-block-after: 1;
+
+    /* Footnote rule gap */
+    --rhythm-footnote-gap: 1;
   }
 }

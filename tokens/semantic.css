@@ -1,22 +1,121 @@
 /**
  * Layer: semantic
  *
- * Maps global tokens to typographic roles:
- * body copy, headings, captions, footnotes, etc.
+ * Maps global tokens to typographic roles.
+ * No direct pixel/pt/in values — everything derived from global tokens.
  *
- * Stub — full token set coming in Task 6.
+ * Type scale (Perfect Fourth, ratio = 1.333, base = 11pt):
+ *   Step 0  (body):      11pt
+ *   Step 1  (caption):   11 × 1.333^0.667 ≈ 9.5pt  (calc approximation below)
+ *   Step 2  (footnote):  11 × 0.818 ≈ 9pt
+ *   Step 3  (small):     calc(var(--font-base-size) * 0.75)  ≈ 8.25pt
+ *   Step +1 (lead/subh): 11 × 1.333 ≈ 14.7pt
+ *   Step +2 (h3):        11 × 1.333^2 ≈ 19.5pt
+ *   Step +3 (h2):        11 × 1.333^3 ≈ 26pt
+ *   Step +4 (h1):        11 × 1.333^4 ≈ 34.7pt
+ *
+ * All vertical spacing tokens are calc(N * var(--book-baseline)).
  */
 
 @layer semantic {
   :root {
-    --font-body: Georgia, 'Times New Roman', serif;
-    --font-heading: Georgia, 'Times New Roman', serif;
-    --font-mono: 'Courier New', monospace;
+    /* ── Font role assignments ─────────────────────────────────────────── */
+    --font-body: var(--font-base-family);
+    --font-heading: var(--font-heading-family);
+    --font-mono: var(--font-mono-family);
 
-    --text-body: calc(var(--pt-base) * 1pt);
-    --text-caption: calc(var(--pt-base) * 0.85pt);
-    --text-footnote: calc(var(--pt-base) * 0.8pt);
+    /* ── Colour role assignments ─────────────────────────────────────────  */
+    --color-body: var(--book-color-ink);
+    --color-heading: var(--book-color-ink);
+    --color-caption: color-mix(in srgb, var(--book-color-ink) 70%, transparent);
+    --color-footnote: color-mix(in srgb, var(--book-color-ink) 75%, transparent);
+    --color-rule: var(--book-color-rule);
+    --color-accent: var(--book-color-accent);
 
-    --leading-body: var(--book-baseline);
+    /* ── Body text ────────────────────────────────────────────────────────
+       font-size = --font-base-size (11pt)
+       line-height = --book-baseline (14pt) — one baseline per line        */
+    --text-body-size: var(--font-base-size);
+    --text-body-leading: var(--book-baseline);
+
+    /* ── Heading sizes — powered by a single scale ratio ─────────────────  */
+
+    /* h1 / Chapter title: base × ratio^4 ≈ 34.7pt */
+    --heading-1-size: calc(
+      var(--font-base-size) * var(--type-scale-ratio) * var(--type-scale-ratio) *
+        var(--type-scale-ratio) * var(--type-scale-ratio)
+    );
+
+    /* h2 / Section head: base × ratio^3 ≈ 26pt */
+    --heading-2-size: calc(
+      var(--font-base-size) * var(--type-scale-ratio) * var(--type-scale-ratio) *
+        var(--type-scale-ratio)
+    );
+
+    /* h3 / Subsection: base × ratio^2 ≈ 19.5pt */
+    --heading-3-size: calc(
+      var(--font-base-size) * var(--type-scale-ratio) * var(--type-scale-ratio)
+    );
+
+    /* h4 / Run-in / A-head: base × ratio^1 ≈ 14.7pt */
+    --heading-4-size: calc(var(--font-base-size) * var(--type-scale-ratio));
+
+    /* ── Heading line-heights (multiples of --book-baseline) ─────────────
+       h1 at ~35pt needs 3 baselines (42pt) to avoid cramping.
+       h2 at ~26pt needs 2 baselines (28pt).
+       h3 at ~19.5pt needs 2 baselines (28pt).
+       h4 at ~14.7pt fits in 1 baseline (14pt) — allow 1 baseline.        */
+    --heading-1-leading: calc(3 * var(--book-baseline));
+    --heading-2-leading: calc(2 * var(--book-baseline));
+    --heading-3-leading: calc(2 * var(--book-baseline));
+    --heading-4-leading: calc(1 * var(--book-baseline));
+
+    /* ── Heading spacing — all multiples of --book-baseline ─────────────
+       Space BEFORE is larger than space AFTER to maintain visual grouping.
+       Values are kept in integers so the page grid never shifts.         */
+    --heading-1-margin-before: calc(var(--rhythm-chapter-before) * var(--book-baseline));
+    --heading-1-margin-after: calc(var(--rhythm-chapter-after) * var(--book-baseline));
+
+    --heading-2-margin-before: calc(var(--rhythm-h2-before) * var(--book-baseline));
+    --heading-2-margin-after: calc(var(--rhythm-h2-after) * var(--book-baseline));
+
+    --heading-3-margin-before: calc(var(--rhythm-h3-before) * var(--book-baseline));
+    --heading-3-margin-after: calc(0 * var(--book-baseline)); /* collapses into text */
+
+    /* ── Sub-body sizes ──────────────────────────────────────────────────  */
+
+    /* Caption: slightly smaller, one step below body, single baseline each */
+    --caption-size: calc(var(--font-base-size) * 0.864); /* ≈ 9.5pt */
+    --caption-leading: calc(1 * var(--book-baseline));
+
+    /* Footnote: smaller still — clear step below caption */
+    --footnote-size: calc(var(--font-base-size) * 0.818); /* ≈ 9pt */
+    --footnote-leading: calc(1 * var(--book-baseline));
+
+    /* Running heads / folios: same as footnote size */
+    --running-head-size: var(--footnote-size);
+    --running-head-leading: calc(1 * var(--book-baseline));
+
+    /* ── Block element spacing — all multiples of --book-baseline ────────  */
+    --block-margin-before: calc(var(--rhythm-block-before) * var(--book-baseline));
+    --block-margin-after: calc(var(--rhythm-block-after) * var(--book-baseline));
+
+    /* Verse / extract indent (from left margin) */
+    --block-indent-left: calc(3 * var(--book-baseline));
+    --block-indent-right: calc(2 * var(--book-baseline));
+
+    /* Callout padding (internal) */
+    --callout-padding-v: calc(1 * var(--book-baseline));
+    --callout-padding-h: calc(2 * var(--book-baseline));
+
+    /* ── Table ─────────────────────────────────────────────────────────── */
+    --table-cell-padding-v: calc(0.5 * var(--book-baseline));
+    --table-cell-padding-h: calc(1 * var(--book-baseline));
+
+    /* ── First-line indent ───────────────────────────────────────────────  */
+    --para-indent: var(--book-para-indent); /* 22pt ≈ 2em */
+
+    /* ── Measure ──────────────────────────────────────────────────────────  */
+    --measure: var(--book-measure); /* 4.5in / 27pc */
   }
 }
