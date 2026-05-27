@@ -122,17 +122,50 @@
     --block-indent-right: calc(var(--rhythm-block-indent-right) * var(--book-baseline));
 
     /* Callout padding (internal) */
-    --callout-padding-v: calc(1 * var(--book-baseline));
-    --callout-padding-h: calc(2 * var(--book-baseline));
+    --callout-padding-v: calc(var(--rhythm-callout-v) * var(--book-baseline));
+    --callout-padding-h: calc(var(--rhythm-callout-h) * var(--book-baseline));
 
     /* ── Table ─────────────────────────────────────────────────────────── */
-    --table-cell-padding-v: calc(0.5 * var(--book-baseline));
-    --table-cell-padding-h: calc(1 * var(--book-baseline));
+    --table-cell-padding-v: calc(var(--rhythm-table-v) * var(--book-baseline));
+    --table-cell-padding-h: calc(var(--rhythm-table-h) * var(--book-baseline));
 
     /* ── First-line indent ───────────────────────────────────────────────  */
     --para-indent: var(--book-para-indent); /* 22pt ≈ 2em */
 
     /* ── Measure ──────────────────────────────────────────────────────────  */
     --measure: var(--book-measure); /* 4.5in / 27pc */
+
+    /* ── Paragraph inter-spacing ─────────────────────────────────────────── */
+    --para-after-space: calc(var(--rhythm-para-after) * var(--book-baseline));
+
+    /* ── List item gap ────────────────────────────────────────────────────── */
+    --list-item-gap: calc(var(--rhythm-list-item) * var(--book-baseline));
+
+    /* ── Drop cap ─────────────────────────────────────────────────────────── */
+    --dropcap-height: calc(var(--dropcap-lines) * var(--book-baseline));
+
+    /* ── Blockquote border ────────────────────────────────────────────────── */
+    --blockquote-rule-width: calc(var(--blockquote-rule-thickness) * 1pt);
+    --blockquote-rule-color: #c8c4bc;
+
+    /* ── Callout colors ───────────────────────────────────────────────────── */
+    --callout-fill: #fffff8;
+    --callout-rule-color: #c8c4bc;
+
+    /* ── Code fills and shape ─────────────────────────────────────────────── */
+    --code-fill: #fffff8;
+    --code-radius: calc(var(--code-corner-radius) * 1pt);
+    --inline-code-fill: #fffff8;
+
+    /* ── Table colors ─────────────────────────────────────────────────────── */
+    --table-head-fill: #fffff8;
+    --table-rule-color: #c8c4bc;
+
+    /* ── Horizontal rule ──────────────────────────────────────────────────── */
+    --hr-width: calc(var(--hr-thickness) * 1pt);
+    --hr-rule-color: #c8c4bc;
+
+    /* ── Footnote rule ────────────────────────────────────────────────────── */
+    --footnote-rule-width: calc(var(--footnote-rule-thickness) * 1pt);
   }
 }

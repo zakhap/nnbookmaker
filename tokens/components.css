@@ -41,7 +41,7 @@
 
   p {
     margin-top: 0;
-    margin-bottom: 0;
+    margin-bottom: var(--para-after-space);
     text-indent: var(--para-indent);
     orphans: 2;
     widows: 2;
@@ -156,6 +156,7 @@
     margin-right: var(--block-indent-right);
     font-size: var(--text-extract-size); /* ≈ 10.2pt — slightly smaller */
     line-height: var(--text-body-leading); /* keep on grid */
+    border-left: var(--blockquote-rule-width) solid var(--blockquote-rule-color);
   }
 
   blockquote p {
@@ -215,8 +216,9 @@
     padding-bottom: var(--callout-padding-v);
     padding-left: var(--callout-padding-h);
     padding-right: var(--callout-padding-h);
-    border-top: 1px solid var(--color-rule);
-    border-bottom: 1px solid var(--color-rule);
+    border-top: 1px solid var(--callout-rule-color);
+    border-bottom: 1px solid var(--callout-rule-color);
+    background: var(--callout-fill);
     font-size: var(--text-extract-size); /* ≈ 10.2pt */
     line-height: var(--text-body-leading);
     page-break-inside: avoid;
@@ -271,12 +273,13 @@
   }
 
   thead {
-    border-top: 1px solid var(--color-rule);
-    border-bottom: 1px solid var(--color-rule);
+    background: var(--table-head-fill);
+    border-top: 1px solid var(--table-rule-color);
+    border-bottom: 1px solid var(--table-rule-color);
   }
 
   tbody tr:last-child {
-    border-bottom: 1px solid var(--color-rule);
+    border-bottom: 1px solid var(--table-rule-color);
   }
 
   th,
@@ -300,6 +303,8 @@
   code {
     font-family: var(--font-mono);
     font-size: var(--text-code-size); /* ≈ 9.5pt — mono at body size looks large */
+    background: var(--inline-code-fill);
+    border-radius: var(--code-radius);
   }
 
   pre {
@@ -311,12 +316,16 @@
     margin-left: var(--block-indent-left);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+    background: var(--code-fill);
+    border-radius: var(--code-radius);
     page-break-inside: avoid;
     break-inside: avoid;
   }
 
   pre code {
     font-size: inherit;
+    background: none;
+    border-radius: 0;
   }
 
   /* ── Footnotes ──────────────────────────────────────────────────────────── */
@@ -368,7 +377,7 @@
      Styled as a traditional endnote list: reduced size, rule above, numbered. */
   .footnotes {
     margin-top: calc(2 * var(--book-baseline));
-    border-top: 1px solid var(--color-rule);
+    border-top: var(--footnote-rule-width) solid var(--color-rule);
     padding-top: calc(1 * var(--book-baseline));
     font-size: var(--footnote-size);
     line-height: var(--footnote-leading);
@@ -422,7 +431,7 @@
   }
 
   li {
-    margin-bottom: 0;
+    margin-bottom: var(--list-item-gap);
     line-height: var(--text-body-leading);
   }
 
@@ -437,7 +446,7 @@
 
   hr {
     border: none;
-    border-top: 1px solid var(--color-rule);
+    border-top: var(--hr-width) solid var(--hr-rule-color);
     margin-top: calc(2 * var(--book-baseline));
     margin-bottom: calc(2 * var(--book-baseline));
   }
@@ -466,7 +475,7 @@
 
   .dropcap::first-letter {
     float: left;
-    font-size: calc(3 * var(--book-baseline)); /* 3-line drop cap */
+    font-size: var(--dropcap-height);
     line-height: 1;
     /* Optical tweaks: margin-top and margin-right are intentional eye-balled
        adjustments to align the cap visually with the text cap-height and the
@@ -482,5 +491,42 @@
     border-bottom: 1px dotted var(--color-rule);
     font-variant-caps: all-small-caps;
     letter-spacing: var(--smallcaps-letter-spacing);
+  }
+
+  /* ── Extract ────────────────────────────────────────────────────────────── */
+
+  .extract {
+    margin-top: var(--block-margin-before);
+    margin-bottom: var(--block-margin-after);
+    margin-left: var(--block-indent-left);
+    margin-right: var(--block-indent-right);
+    font-size: var(--text-extract-size);
+    line-height: var(--text-body-leading);
+  }
+
+  .extract p {
+    text-indent: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .extract p + p {
+    text-indent: var(--para-indent);
+  }
+
+  /* ── Ornament (leaf directive ::ornament) ──────────────────────────────── */
+
+  .ornament {
+    text-align: center;
+    margin-top: calc(2 * var(--book-baseline));
+    margin-bottom: calc(2 * var(--book-baseline));
+    line-height: var(--text-body-leading);
+  }
+
+  .ornament::after {
+    content: '\2767'; /* ❧ fleuron */
+    color: var(--color-accent);
+    font-size: var(--heading-3-size);
+    line-height: 1;
   }
 }

@@ -1,11 +1,13 @@
 /**
  * TokenPanel — comprehensive live controls for book CSS design tokens.
  *
- * Sections: Type Scale · Fonts · Paragraph · Chapter (h1) · Section (h2) ·
- *   Subsection (h3) · Minor heads (h4–h6) · Heading style · Sub-body sizes ·
- *   Block spacing · Measure · Margins · Colors
+ * Sections:
+ *   Type Scale · Fonts · Paragraph · Drop Cap · Chapter (h1) · Section (h2) ·
+ *   Subsection (h3) · Minor heads (h4–h6) · Heading Style · Sub-body Sizes ·
+ *   Block Spacing · Blockquote · Callout · Code Blocks · Tables · Lists ·
+ *   Horizontal Rule · Footnote Rule · Measure · Margins · Colors
  *
- * Every control is self-contained: it reads its initial value from the document
+ * Every control is self-contained: reads its initial value from the document
  * root via readCssProp() and writes back via setTokenOverride() + setProperty().
  * "Reset all" remounts every control (key={resetKey}) so they re-read CSS.
  */
@@ -272,7 +274,9 @@ interface ColorRowProps {
 
 function ColorRow({ label, prop, defaultValue }: ColorRowProps) {
   const setTokenOverride = useBookStore((s) => s.setTokenOverride);
-  const initial = readCssProp(prop, defaultValue) || defaultValue;
+  const raw = readCssProp(prop, defaultValue);
+  // Only use the raw value if it looks like a concrete color; otherwise fall back.
+  const initial = /^#[0-9a-fA-F]{3,8}$|^rgb/.test(raw) ? raw : defaultValue;
   const [value, setValue] = useState<string>(initial);
 
   const handleChange = useCallback(
@@ -514,6 +518,29 @@ export default function TokenPanel() {
           parse={(raw) => parseFloat(raw)}
           format={(n) => String(n)}
         />
+        <SliderRow
+          label="Space between ¶"
+          prop="--rhythm-para-after"
+          min={0} max={2} step={0.25}
+          defaultValue={0}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+
+        {/* ── Drop Cap ─────────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Drop Cap</div>
+
+        <SliderRow
+          label="Height (0 = off)"
+          prop="--dropcap-lines"
+          min={0} max={6} step={1}
+          defaultValue={3}
+          displayFormat={(n) => n === 0 ? 'off' : `${n} lines`}
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <ColorRow label="Color" prop="--color-accent" defaultValue="#5a4632" />
 
         {/* ── Chapter (h1) ─────────────────────────────────────────────────── */}
         <div style={SECTION_HEADER_STYLE}>Chapter — h1</div>
@@ -674,7 +701,7 @@ export default function TokenPanel() {
           format={(n) => n.toFixed(3)}
         />
 
-        {/* ── Block spacing ──────────────────────────────────────────────────── */}
+        {/* ── Block Spacing ──────────────────────────────────────────────────── */}
         <div style={SECTION_HEADER_STYLE}>Block Spacing</div>
 
         <SliderRow
@@ -700,6 +727,141 @@ export default function TokenPanel() {
           prop="--rhythm-block-indent-left"
           min={0} max={8} step={0.5}
           defaultValue={3}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <SliderRow
+          label="Indent right"
+          prop="--rhythm-block-indent-right"
+          min={0} max={8} step={0.5}
+          defaultValue={2}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+
+        {/* ── Blockquote ───────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Blockquote</div>
+
+        <SliderRow
+          label="Left border"
+          prop="--blockquote-rule-thickness"
+          min={0} max={6} step={0.5}
+          defaultValue={0}
+          displayFormat={(n) => n === 0 ? 'none' : `${n}pt`}
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <ColorRow label="Border color" prop="--blockquote-rule-color" defaultValue="#c8c4bc" />
+
+        {/* ── Callout ──────────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Callout</div>
+
+        <ColorRow label="Background" prop="--callout-fill" defaultValue="#fffff8" />
+        <ColorRow label="Border" prop="--callout-rule-color" defaultValue="#c8c4bc" />
+        <SliderRow
+          label="Pad vertical"
+          prop="--rhythm-callout-v"
+          min={0} max={3} step={0.25}
+          defaultValue={1}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <SliderRow
+          label="Pad horizontal"
+          prop="--rhythm-callout-h"
+          min={0} max={4} step={0.25}
+          defaultValue={2}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+
+        {/* ── Code Blocks ──────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Code Blocks</div>
+
+        <ColorRow label="Block background" prop="--code-fill" defaultValue="#fffff8" />
+        <ColorRow label="Inline background" prop="--inline-code-fill" defaultValue="#fffff8" />
+        <SliderRow
+          label="Corner radius"
+          prop="--code-corner-radius"
+          min={0} max={8} step={0.5}
+          defaultValue={0}
+          displayFormat={(n) => n === 0 ? 'none' : `${n}pt`}
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+
+        {/* ── Tables ───────────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Tables</div>
+
+        <ColorRow label="Header fill" prop="--table-head-fill" defaultValue="#fffff8" />
+        <ColorRow label="Rule color" prop="--table-rule-color" defaultValue="#c8c4bc" />
+        <SliderRow
+          label="Cell pad — vertical"
+          prop="--rhythm-table-v"
+          min={0} max={2} step={0.25}
+          defaultValue={0.5}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <SliderRow
+          label="Cell pad — horizontal"
+          prop="--rhythm-table-h"
+          min={0} max={4} step={0.25}
+          defaultValue={1}
+          displayUnit="×"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+
+        {/* ── Lists ────────────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Lists</div>
+
+        <SliderRow
+          label="Item spacing"
+          prop="--rhythm-list-item"
+          min={0} max={2} step={0.25}
+          defaultValue={0}
+          displayFormat={(n) => n === 0 ? 'tight' : `${n}×`}
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+
+        {/* ── Horizontal Rule ──────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Horizontal Rule</div>
+
+        <SliderRow
+          label="Thickness"
+          prop="--hr-thickness"
+          min={0.25} max={4} step={0.25}
+          defaultValue={1}
+          displayUnit="pt"
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <ColorRow label="Color" prop="--hr-rule-color" defaultValue="#c8c4bc" />
+
+        {/* ── Footnote Rule ─────────────────────────────────────────────────── */}
+        <div style={SECTION_HEADER_STYLE}>Footnote Rule</div>
+
+        <SliderRow
+          label="Thickness (0 = hide)"
+          prop="--footnote-rule-thickness"
+          min={0} max={3} step={0.25}
+          defaultValue={1}
+          displayFormat={(n) => n === 0 ? 'none' : `${n}pt`}
+          parse={(raw) => parseFloat(raw)}
+          format={(n) => String(n)}
+        />
+        <SliderRow
+          label="Gap above rule"
+          prop="--rhythm-footnote-gap"
+          min={0} max={3} step={0.5}
+          defaultValue={1}
           displayUnit="×"
           parse={(raw) => parseFloat(raw)}
           format={(n) => String(n)}

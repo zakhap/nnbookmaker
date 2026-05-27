@@ -78,5 +78,34 @@
     --caption-ratio: 0.864;   /* ≈ 9.5pt */
     --footnote-ratio: 0.818;  /* ≈ 9pt */
     --code-ratio: 0.864;      /* ≈ 9.5pt — mono runs wide at full body size */
+
+    /* ── Paragraph spacing (0 = indent model) ──────────────────────────── */
+    --rhythm-para-after: 0;
+
+    /* ── List item vertical gap ─────────────────────────────────────────── */
+    --rhythm-list-item: 0;
+
+    /* ── Drop cap height in baseline lines ──────────────────────────────── */
+    --dropcap-lines: 3;
+
+    /* ── Horizontal rule thickness (pt) ─────────────────────────────────── */
+    --hr-thickness: 1;
+
+    /* ── Blockquote left border thickness (pt, 0 = none) ─────────────────── */
+    --blockquote-rule-thickness: 0;
+
+    /* ── Code block corner radius (pt) ──────────────────────────────────── */
+    --code-corner-radius: 0;
+
+    /* ── Footnote separator rule thickness (pt) ──────────────────────────── */
+    --footnote-rule-thickness: 1;
+
+    /* ── Table cell padding multipliers ─────────────────────────────────── */
+    --rhythm-table-v: 0.5;
+    --rhythm-table-h: 1;
+
+    /* ── Callout internal padding multipliers ────────────────────────────── */
+    --rhythm-callout-v: 1;
+    --rhythm-callout-h: 2;
   }
 }
