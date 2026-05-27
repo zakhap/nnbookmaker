@@ -66,7 +66,17 @@
     --rhythm-block-before: 1;
     --rhythm-block-after: 1;
 
+    /* Block element indent multipliers */
+    --rhythm-block-indent-left: 3;
+    --rhythm-block-indent-right: 2;
+
     /* Footnote rule gap */
     --rhythm-footnote-gap: 1;
+
+    /* ── Sub-body text size ratios (fraction of --font-base-size) ───────── */
+    --extract-ratio: 0.927;   /* ≈ 10.2pt — blockquotes, callouts, tables */
+    --caption-ratio: 0.864;   /* ≈ 9.5pt */
+    --footnote-ratio: 0.818;  /* ≈ 9pt */
+    --code-ratio: 0.864;      /* ≈ 9.5pt — mono runs wide at full body size */
   }
 }

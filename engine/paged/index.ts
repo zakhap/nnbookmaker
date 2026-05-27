@@ -7,4 +7,4 @@
  */
 
 export { PagedPreview } from './PagedPreview';
-export type { PagedPreviewProps } from './PagedPreview';
+export type { PagedPreviewHandle, PagedPreviewProps } from './PagedPreview';

@@ -242,6 +242,7 @@ ${pageGeomCSS}
       background: white;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       margin: 0 auto 2rem;
+      outline: 1px solid #bbb;
     }
 
     /* Print / PDF export — strip the preview chrome so the PDF contains
@@ -297,6 +298,8 @@ ${html}
       // Calling window.print() from inside the iframe prints only the iframe
       // document (the fully-paginated book), not the surrounding app shell.
       window.addEventListener('message', function (event) {
+        // Guard against spoofed postMessage from unrelated windows.
+        if (event.source !== window.parent) return;
         if (event.data && event.data.type === 'print') {
           window.print();
         }
@@ -340,9 +343,12 @@ export const PagedPreview = forwardRef<PagedPreviewHandle, PagedPreviewProps>(
     // surrounding app shell.
     useImperativeHandle(ref, () => ({
       triggerPrint() {
+        // '*' is required here because srcdoc iframes have a null/opaque origin
+        // (about:srcdoc), so a specific origin string cannot be targeted — any
+        // concrete origin would silently fail to match.
         iframeRef.current?.contentWindow?.postMessage({ type: 'print' }, '*');
       },
-    }));
+    }), []);
 
     // Listen for the pagedjs:rendered postMessage from the iframe.
     // When it arrives, scroll the iframe back to the saved page index.
